@@ -1,5 +1,7 @@
 module SugarJ-Folding
 
+imports SugarJ-Folding.generated
+
 folding
   
   // This file can be used for custom folding rules.

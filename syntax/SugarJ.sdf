@@ -1,7 +1,13 @@
+%% Grammar for the SugarJ language
+%% By default, based on an example "entities" syntax
 module SugarJ
+
 exports
+
   context-free start-symbols
-    CompilationUnit
   
+    Start
+
   context-free syntax
-    "abc" -> CompilationUnit {cons("abc")}
+  
+    -> Start {"Start"}

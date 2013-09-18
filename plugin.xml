@@ -1,32 +1,26 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
-
 <plugin>
-       <extension point="org.eclipse.imp.runtime.languageDescription">
-          <language
-                derivedFrom="DynamicRoot"
-                description="SugarJ-dummy"
-                language="SugarJ-dummy"
-                validator="org.sugarj.editor.SugarJValidator"
-                validatorClass="org.sugarj.editor.SugarJValidator"></language>
-       </extension>
-       <extension id="org.sugarj.editor.parser" name="SugarJ Parser" point="org.eclipse.imp.runtime.parser">
-          <parser class="org.sugarj.editor.SugarJParseController" language="SugarJ">
-          </parser>
-       </extension>
-       <extension
-             id="SugarJBuilder"
-             name="SugarJ builder"
-             point="org.eclipse.core.resources.builders">
-          <builder
-                callOnEmptyDelta="true">
-	         <run class="org.sugarj.builder.Builder">
-	            <parameter name="optimize" value="true"/>
-	            <parameter name="comment" value="SugarJ Builder"/>
-	         </run>
-          </builder>
-       </extension>
-          <extension
+   <extension
+         point="org.eclipse.imp.runtime.languageDescription">
+      <language
+            description="SugarJ"
+            language="SugarJ"
+            derivedFrom="DynamicRoot"
+            validator="org.sugarj.editor.SugarJValidator"
+            validatorClass="org.sugarj.editor.SugarJValidator"
+      ></language>
+   </extension>
+   <extension
+         id="org.sugarj.editor.parser"
+         name="SugarJ Parser"
+         point="org.eclipse.imp.runtime.parser">
+      <parser
+            class="org.sugarj.editor.SugarJParseController"
+            language="SugarJ">
+      </parser>
+   </extension>
+         <extension
          point="org.eclipse.ui.newWizards">
       <primaryWizard
             id="org.sugarj.editor.wizard.SugarJNewWizard">
@@ -42,5 +36,5 @@
             class="org.sugarj.editor.wizard.SugarJNewWizard"
             id="org.sugarj.editor.wizard.SugarJNewWizard">
       </wizard>
-   </extension>    
-    </plugin>
+   </extension>        
+</plugin>

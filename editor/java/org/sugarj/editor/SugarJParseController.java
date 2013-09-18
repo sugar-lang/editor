@@ -218,7 +218,7 @@ public class SugarJParseController extends SugarJParseControllerGenerated {
     for (int i = 0; i < exts.size(); i++)
       exts.set(i, "\"" + exts.get(i) + "\"");
     String extsString = StringCommands.printListSeparated(exts, ",");
-    String out = in.replaceFirst("Extensions\\(Values\\(\\[.*\\]\\)\\)", "Extensions\\(Values\\(\\[" + extsString + "\\]\\)\\)");
+    String out = in.replace("Extensions(Values([", "Extensions(Values([" + extsString);
     return new ByteArrayInputStream(out.getBytes());
   }
 

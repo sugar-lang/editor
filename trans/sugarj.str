@@ -1,14 +1,7 @@
 module sugarj
 
-imports
-  libstratego-lib
-  libstratego-gpp
-  libstratego-aterm
-  include/SugarJ
-  lib/editor-common.generated
-  check
-  generate
-  prettyprint
-  refactorings
+imports libstratego-lib
 
-rules // Main editor interface (defined by editor/SugarJ-Builders and -References.esv)
+rules
+  editor-analyze :
+  	(ast, path, project-path) -> (ast, [], [], [])

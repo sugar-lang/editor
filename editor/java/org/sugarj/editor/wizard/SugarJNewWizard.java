@@ -16,6 +16,7 @@ import org.eclipse.jdt.internal.ui.wizards.JavaProjectWizard;
  * become obsolete
  */
 
+@SuppressWarnings("restriction")
 public class SugarJNewWizard extends JavaProjectWizard {
 	
 	public boolean performFinish() {

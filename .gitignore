@@ -3,3 +3,9 @@
 /.metadata/
 /.cache/
 
+# Spoofax stuff
+/editor/*.generated.esv
+/include/
+/lib/*.generated.str
+/syntax/*generated.pp
+

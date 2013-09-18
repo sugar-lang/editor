@@ -1,5 +1,7 @@
 module SugarJ-Syntax
 
+imports SugarJ-Syntax.generated
+
 language
                                                                    
   // This file can be used for custom syntax rules.                
