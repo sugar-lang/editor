@@ -5,7 +5,12 @@
 
 # Spoofax stuff
 /editor/*.generated.esv
+/editor/java/trans
 /include/
 /lib/*.generated.str
-/syntax/*generated.pp
+/syntax/*generated*
 
+utils
+lib/runtime
+lib/*.generated.str
+lib-refactoring/*.generated.str

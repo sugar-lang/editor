@@ -4,37 +4,20 @@
    <extension
          point="org.eclipse.imp.runtime.languageDescription">
       <language
-            description="SugarJ"
-            language="SugarJ"
+            description="sugar-lang-dummy"
+            language="sugar-lang-dummy"
             derivedFrom="DynamicRoot"
-            validator="org.sugarj.editor.SugarJValidator"
-            validatorClass="org.sugarj.editor.SugarJValidator"
+            validator="org.sugarj.editor.SugarLangValidator"
+            validatorClass="org.sugarj.editor.SugarLangValidator"
       ></language>
    </extension>
    <extension
          id="org.sugarj.editor.parser"
-         name="SugarJ Parser"
+         name="sugar-lang Parser"
          point="org.eclipse.imp.runtime.parser">
       <parser
-            class="org.sugarj.editor.SugarJParseController"
-            language="SugarJ">
+            class="org.sugarj.editor.SugarLangParseController"
+            language="sugar-lang">
       </parser>
-   </extension>
-         <extension
-         point="org.eclipse.ui.newWizards">
-      <primaryWizard
-            id="org.sugarj.editor.wizard.SugarJNewWizard">
-      </primaryWizard>
-      <category
-            name="SugarJ Wizzards"
-            id="Wizzard">
-      </category>
-      <wizard
-            name="SugarJ Project"
-            icon="icons/wizard.gif"
-            category="Wizzard"
-            class="org.sugarj.editor.wizard.SugarJNewWizard"
-            id="org.sugarj.editor.wizard.SugarJNewWizard">
-      </wizard>
-   </extension>        
+   </extension>    
 </plugin>

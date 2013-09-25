@@ -1,6 +1,6 @@
-module SugarJ-Syntax
+module sugar-lang-Syntax
 
-imports SugarJ-Syntax.generated
+imports sugar-lang-Syntax.generated
 
 language
                                                                    

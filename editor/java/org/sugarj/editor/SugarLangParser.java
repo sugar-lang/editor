@@ -48,7 +48,7 @@ import org.sugarj.stdlib.StdLib;
 /**
  * @author Sebastian Erdweg <seba at informatik uni-marburg de>
  */
-public class SugarJParser extends JSGLRI {
+public class SugarLangParser extends JSGLRI {
 
   private Environment environment;
   
@@ -78,7 +78,7 @@ public class SugarJParser extends JSGLRI {
 //  private JSGLRI parser;
 //  private Path parserTable;
   
-  public SugarJParser(JSGLRI parser) {
+  public SugarLangParser(JSGLRI parser) {
     super(parser.getParseTable(), parser.getStartSymbol(), parser.getController());
   }
   
@@ -86,7 +86,7 @@ public class SugarJParser extends JSGLRI {
   @Override
   protected IStrategoTerm doParse(String input, String filename) throws IOException {
     if (environment == null && getController().getProject() != null)
-      environment = SugarJParseController.makeProjectEnvironment(getController().getProject().getRawProject());
+      environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject());
     assert environment != null;
     
     if (!BaseLanguageRegistry.getInstance().isRegistered(FileCommands.getExtension(filename))) {
@@ -125,7 +125,7 @@ public class SugarJParser extends JSGLRI {
     
     final AbstractBaseLanguage factory = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(sourceFile));
 
-    SugarJParser.setPending(sourceFile, true);
+    SugarLangParser.setPending(sourceFile, true);
     
     Job parseJob = new Job("SugarJ parser: " + sourceFile.getRelativePath()) {
       @Override
@@ -140,7 +140,7 @@ public class SugarJParser extends JSGLRI {
           org.strategoxt.imp.runtime.Environment.logException(e);
         } finally {
           monitor.done();
-          SugarJParser.setPending(sourceFile, false);
+          SugarLangParser.setPending(sourceFile, false);
           if (ok)
             getController().scheduleParserUpdate(0, false);
         }
@@ -157,9 +157,9 @@ public class SugarJParser extends JSGLRI {
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
     
-    Log.out = SugarJConsole.getOutputPrintStream();
-    Log.err = SugarJConsole.getErrorPrintStream();
-    SugarJConsole.activateConsoleOnce();
+    Log.out = SugarLangConsole.getOutputPrintStream();
+    Log.err = SugarLangConsole.getErrorPrintStream();
+    SugarLangConsole.activateConsoleOnce();
     
     try {
       return Driver.run(input, sourceFile, environment, monitor, factory);

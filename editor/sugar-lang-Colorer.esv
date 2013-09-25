@@ -1,6 +1,6 @@
-module SugarJ-Colorer
+module sugar-lang-Colorer
 
-imports SugarJ-Colorer.generated
+imports sugar-lang-Colorer.generated
 
 colorer
                                                                       

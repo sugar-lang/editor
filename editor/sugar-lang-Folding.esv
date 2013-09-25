@@ -1,6 +1,6 @@
-module SugarJ-Folding
+module sugar-lang-Folding
 
-imports SugarJ-Folding.generated
+imports sugar-lang-Folding.generated
 
 folding
   

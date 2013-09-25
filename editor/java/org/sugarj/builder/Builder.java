@@ -39,8 +39,8 @@ import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
-import org.sugarj.editor.SugarJConsole;
-import org.sugarj.editor.SugarJParseController;
+import org.sugarj.editor.SugarLangConsole;
+import org.sugarj.editor.SugarLangProjectEnvironment;
 import org.sugarj.util.ProcessingListener;
 
 /**
@@ -89,7 +89,7 @@ public class Builder extends IncrementalProjectBuilder {
   
   protected void clean(IProgressMonitor monitor) throws CoreException {
     File f = getProject().getLocation().append(JavaCore.create(getProject()).getOutputLocation().makeRelativeTo(getProject().getFullPath())).toFile();
-    Environment environment = SugarJParseController.makeProjectEnvironment(getProject());
+    Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     try {
       FileCommands.delete(new AbsolutePath(f.getPath()));
       FileCommands.delete(environment.getParseBin());
@@ -112,7 +112,7 @@ public class Builder extends IncrementalProjectBuilder {
 
     try {
       getProject().accept(new IResourceVisitor() {
-        Environment environment = SugarJParseController.makeProjectEnvironment(getProject());
+        Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
         
         @Override
         public boolean visit(IResource resource) throws CoreException {
@@ -147,16 +147,16 @@ public class Builder extends IncrementalProjectBuilder {
   }
 
   private void build(IProgressMonitor monitor, final List<BuildInput> inputs, String what) {
-    final Environment environment = SugarJParseController.makeProjectEnvironment(getProject());
+    final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     environment.setGenerateFiles(true);
     
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
 
-    Log.out = SugarJConsole.getOutputPrintStream();
-    Log.err = SugarJConsole.getErrorPrintStream();
-    SugarJConsole.activateConsoleOnce();
+    Log.out = SugarLangConsole.getOutputPrintStream();
+    Log.err = SugarLangConsole.getErrorPrintStream();
+    SugarLangConsole.activateConsoleOnce();
 
     Job buildJob = new Job("Build " + what) {
       @Override

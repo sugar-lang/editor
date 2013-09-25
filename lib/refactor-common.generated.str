@@ -63,5 +63,5 @@ input-dialog:
 strategies //pp-table
 	
 get-pp-table=
-  import-term(include/SugarJ.generated.pp.af)
+  import-term(include/sugar-lang.generated.pp.af)
 	

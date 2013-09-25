@@ -33,9 +33,9 @@ import org.strategoxt.imp.runtime.dynamicloading.Descriptor;
  * @author Lennart Kats <lennart add lclnet.nl>
  * @author Sebastian Erdweg <seba at informatik uni-marburg de>
  */
-public class SugarJConsole {
+public class SugarLangConsole {
 
-  private static final String CONSOLE_NAME = "SugarJ console";
+  private static final String CONSOLE_NAME = "Sugar-Lang console";
 
   private static MessageConsole lastConsole;
 
@@ -92,11 +92,11 @@ public class SugarJConsole {
   private synchronized static MessageConsole getConsole() {
     IConsoleManager consoles = ConsolePlugin.getDefault().getConsoleManager();
     for (IConsole console : consoles.getConsoles()) {
-      if (SugarJConsole.CONSOLE_NAME.equals(console.getName()))
+      if (SugarLangConsole.CONSOLE_NAME.equals(console.getName()))
         return (MessageConsole) console;
     }
     // No console found, so create a new one
-    MessageConsole result = new MessageConsole(SugarJConsole.CONSOLE_NAME, null);
+    MessageConsole result = new MessageConsole(SugarLangConsole.CONSOLE_NAME, null);
     consoles.addConsoles(new IConsole[] { result });
     return result;
   }
@@ -137,7 +137,7 @@ public class SugarJConsole {
       @Override
       public IStatus runInUIThread(IProgressMonitor monitor) {
         final String ID = IConsoleConstants.ID_CONSOLE_VIEW;
-        MessageConsole console = SugarJConsole.getConsole();
+        MessageConsole console = SugarLangConsole.getConsole();
         if (consoleViewOnly) {
           console.activate();
           return Status.OK_STATUS;

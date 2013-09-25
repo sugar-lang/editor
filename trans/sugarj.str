@@ -1,7 +1,0 @@
-module sugarj
-
-imports libstratego-lib
-
-rules
-  editor-analyze :
-  	(ast, path, project-path) -> (ast, [], [], [])

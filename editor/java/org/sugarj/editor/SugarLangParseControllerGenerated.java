@@ -12,9 +12,9 @@ import org.strategoxt.imp.runtime.dynamicloading.Descriptor;
 import org.strategoxt.imp.runtime.dynamicloading.DescriptorFactory;
 import org.strategoxt.imp.runtime.dynamicloading.DynamicParseController;
 
-public class SugarJParseControllerGenerated extends DynamicParseController 
+public class SugarLangParseControllerGenerated extends DynamicParseController 
 { 
-  public static final String LANGUAGE = new String("SugarJ");
+  public static final String LANGUAGE = new String("sugar-lang");
 
   private static final String TABLE = "/include/" + LANGUAGE + ".tbl";
 
@@ -35,15 +35,15 @@ public class SugarJParseControllerGenerated extends DynamicParseController
 
   protected static synchronized void setDescriptor(Descriptor descriptor)
   { 
-    SugarJParseControllerGenerated.descriptor = descriptor;
+    SugarLangParseControllerGenerated.descriptor = descriptor;
   }
 
   protected static void createDescriptor()
   { 
     try
     { 
-      InputStream descriptorStream = SugarJParseControllerGenerated.class.getResourceAsStream(DESCRIPTOR);
-      InputStream table = SugarJParseControllerGenerated.class.getResourceAsStream(TABLE);
+      InputStream descriptorStream = SugarLangParseControllerGenerated.class.getResourceAsStream(DESCRIPTOR);
+      InputStream table = SugarLangParseControllerGenerated.class.getResourceAsStream(TABLE);
       boolean filesystem = false;
       if(descriptorStream == null && new File("./" + DESCRIPTOR).exists())
       { 
@@ -60,7 +60,7 @@ public class SugarJParseControllerGenerated extends DynamicParseController
       if(table == null)
         throw new BadDescriptorException("Could not load parse table from " + TABLE + " (not found in plugin: " + getPluginLocation() + ")");
       descriptor = DescriptorFactory.load(descriptorStream, table, filesystem ? Path.fromPortableString("./") : null);
-      descriptor.setAttachmentProvider(SugarJParseControllerGenerated.class);
+      descriptor.setAttachmentProvider(SugarLangParseControllerGenerated.class);
     }
     catch(BadDescriptorException exc)
     { 
@@ -78,7 +78,7 @@ public class SugarJParseControllerGenerated extends DynamicParseController
 
   private static String getPluginLocation()
   { 
-    return SugarJParseController.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+    return SugarLangParseController.class.getProtectionDomain().getCodeSource().getLocation().getFile();
   }
 
   @Override public IParseController getWrapped()

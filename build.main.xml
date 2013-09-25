@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="SugarJ" default="all">
+<project name="sugar-lang" default="all">
     
     <!-- Key input modules -->
-    <property name="sdfmodule" value="SugarJ"/>
-    <property name="metasdfmodule" value="Stratego-SugarJ"/>
-    <property name="esvmodule" value="SugarJ"/>
-    <property name="strmodule" value="sugarj"/>
+    <property name="sdfmodule" value="sugar-lang"/>
+    <property name="metasdfmodule" value="Stratego-sugar-lang"/>
+    <property name="esvmodule" value="sugar-lang"/>
+    <property name="strmodule" value="sugar_lang"/>
 
     <!-- Project directories -->
     <property name="trans" location="trans"/>

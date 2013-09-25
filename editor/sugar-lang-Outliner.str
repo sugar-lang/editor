@@ -1,10 +1,10 @@
-module editor/SugarJ-Outliner
+module editor/sugar-lang-Outliner
 
 imports
-  include/SugarJ
+  include/sugar-lang
   lib/runtime/editor/outline-library
   lib/runtime/editor/origins
-  editor/SugarJ-Outliner.generated
+  editor/sugar-lang-Outliner.generated
 
 rules
   

@@ -1,6 +1,6 @@
-module SugarJ-References
+module sugar-lang-References
 
-imports SugarJ-References.generated
+imports sugar-lang-References.generated
 
 references
                                                                                                    

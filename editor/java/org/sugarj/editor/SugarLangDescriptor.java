@@ -23,7 +23,6 @@ import org.strategoxt.imp.runtime.dynamicloading.BadDescriptorException;
 import org.strategoxt.imp.runtime.dynamicloading.Descriptor;
 import org.strategoxt.imp.runtime.dynamicloading.DynamicParseController;
 import org.strategoxt.imp.runtime.dynamicloading.IDynamicLanguageService;
-import org.strategoxt.imp.runtime.dynamicloading.IOnSaveService;
 import org.strategoxt.imp.runtime.parser.SGLRParseController;
 import org.strategoxt.imp.runtime.services.StrategoObserver;
 import org.sugarj.common.path.AbsolutePath;
@@ -33,7 +32,7 @@ import org.sugarj.common.path.AbsolutePath;
  * 
  * @author Lennart Kats <lennart add lclnet.nl>
  */
-public class SugarJDescriptor extends Descriptor {
+public class SugarLangDescriptor extends Descriptor {
 
   private final IStrategoAppl baseDocument;
   
@@ -41,20 +40,19 @@ public class SugarJDescriptor extends Descriptor {
 
   private ExecutorService reloadEditorExecutorService = Executors.newSingleThreadExecutor();
   
-  public SugarJDescriptor(Descriptor baseDescriptor) throws BadDescriptorException {
+  public SugarLangDescriptor(Descriptor baseDescriptor) throws BadDescriptorException {
     super(baseDescriptor.getDocument());
     baseDocument = baseDescriptor.getDocument();
     setDynamicallyLoaded(true);
   }
   
   @Override
-  @SuppressWarnings("unchecked")
   public synchronized <T extends ILanguageService> T createService(
       Class<T> type, SGLRParseController controller)
       throws BadDescriptorException {
     
-    if (controller != null && controller.getParser() instanceof SugarJParser && ((SugarJParser) controller.getParser()).isInitialized()) {
-      List<IStrategoTerm> services = ((SugarJParser) controller.getParser()).getEditorServices();
+    if (controller != null && controller.getParser() instanceof SugarLangParser && ((SugarLangParser) controller.getParser()).isInitialized()) {
+      List<IStrategoTerm> services = ((SugarLangParser) controller.getParser()).getEditorServices();
       if (services != null && !services.equals(lastServices)) {
         setDocument(composeDefinitions(baseDocument, services));
         reloadEditors(controller);
@@ -72,8 +70,8 @@ public class SugarJDescriptor extends Descriptor {
     
     T result = super.createService(type, controller);
     
-    if (result instanceof IOnSaveService)
-      result = (T) new SugarJOnSaveService(this, (IOnSaveService) result);
+//    if (result instanceof IOnSaveService)
+//      result = (T) new SugarJOnSaveService(this, (IOnSaveService) result);
     
     if (result instanceof StrategoObserver) {
       initObserver((StrategoObserver) result);

@@ -14,7 +14,7 @@
         <arguments>
             <dictionary>
                 <key>LaunchConfigHandle</key>
-                <value>&lt;project&gt;/.externalToolBuilders/SugarJ build.main.xml.launch</value>
+                <value>&lt;project&gt;/.externalToolBuilders/sugar-lang build.main.xml.launch</value>
             </dictionary>
         </arguments>
     </buildCommand>
@@ -24,7 +24,7 @@
 		<arguments>
 			<dictionary>
 				<key>LaunchConfigHandle</key>
-				<value>&lt;project&gt;/.externalToolBuilders/SugarJ clean-project.xml.launch</value>
+				<value>&lt;project&gt;/.externalToolBuilders/sugar-lang clean-project.xml.launch</value>
 			</dictionary>
 		</arguments>
 	</buildCommand>
