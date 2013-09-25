@@ -17,7 +17,7 @@ import org.eclipse.jdt.internal.ui.wizards.JavaProjectWizard;
  */
 
 @SuppressWarnings("restriction")
-public class SugarJNewWizard extends JavaProjectWizard {
+public class SugarLangNewWizard extends JavaProjectWizard {
 	
 	public boolean performFinish() {
 		boolean res = super.performFinish();
