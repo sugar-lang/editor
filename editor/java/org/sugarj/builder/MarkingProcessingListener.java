@@ -15,7 +15,7 @@ import org.sugarj.util.ProcessingListener;
 /**
  * @author seba
  */
-public class MarkingProcessingListener implements ProcessingListener {
+public class MarkingProcessingListener extends ProcessingListener {
   
   private IProject project;
   
