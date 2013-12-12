@@ -1,8 +1,9 @@
 module names
 
 imports
-  lib/runtime/nbl/-
+  lib/runtime/nabl/-
   lib/runtime/task/-
+  lib/runtime/properties/-
   lib/runtime/types/-
   lib/runtime/editor/-
   include/sugar-lang
