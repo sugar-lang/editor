@@ -2,7 +2,6 @@ package org.sugarj.editor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -192,7 +191,7 @@ public class SugarLangParser extends JSGLRI {
   public List<IStrategoTerm> getEditorServices() {
     final List<IStrategoTerm> empty = Collections.emptyList();
     Result result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment);
-    return result == null ? empty : new ArrayList<IStrategoTerm>(result.getEditorServices());
+    return result == null ? empty : result.getEditorServices();
   }
   
   public boolean isInitialized() {
