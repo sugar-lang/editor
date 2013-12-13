@@ -1,0 +1,10 @@
+module sugar-lang
+
+context-free start-symbols
+  
+  Start
+
+templates
+  
+  Start.Dummy = <>
+

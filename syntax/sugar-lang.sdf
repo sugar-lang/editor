@@ -1,13 +1,10 @@
 module sugar-lang
-
-imports Common
-
 exports
-
   context-free start-symbols
-  
     Start
 
   context-free syntax
-  
-    -> Start {"Dummy"}
+     -> Start {cons("Dummy")}
+
+  context-free syntax
+    CONTENTCOMPLETE -> Start {cons("COMPLETION-Start")}
