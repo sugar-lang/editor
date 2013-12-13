@@ -1,16 +1,23 @@
 module sugar-lang.main
 
-imports sugar-lang-Builders sugar-lang-Refactorings sugar-lang-Colorer sugar-lang-Completions sugar-lang-Folding sugar-lang-References sugar-lang-Syntax
+imports
+  sugar-lang-Menus
+  sugar-lang-Refactorings
+  sugar-lang-Colorer
+  sugar-lang-Completions
+  sugar-lang-Folding
+  sugar-lang-References
+  sugar-lang-Syntax
 
 language General properties
-                  
-  name          : sugar-lang
-  id            : org.sugarj.editor
-  extends       : Root
-                  
-  description   : "Spoofax/IMP-generated editor for the sugar-lang language"
-  url           : http://strategoxt.org
-                  
-  extensions    : 
-  table         : include/sugar-lang.tbl
-  start symbols : Start
+  
+  name:    sugar-lang
+  id:  org.sugarj.editor
+  extends: Root
+  
+  description: "Spoofax-generated editor for the sugar-lang language"
+  url: http://strategoxt.org
+  
+  extensions: 
+  table:  include/sugar-lang.tbl
+  start symbols: Start
