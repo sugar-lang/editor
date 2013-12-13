@@ -12,5 +12,8 @@
 
 utils
 lib/runtime
-lib/*.generated.str
+trans/*.generated*
 lib-refactoring/*.generated.str
+/.cache
+/bin
+/include
