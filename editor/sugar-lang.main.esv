@@ -21,3 +21,5 @@ language General properties
   extensions: 
   table:  include/sugar-lang.tbl
   start symbols: Start
+
+  provider: include/sugar_lang-java.jar
