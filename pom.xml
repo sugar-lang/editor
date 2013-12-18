@@ -14,4 +14,29 @@
 	</parent>
 
 	<packaging>eclipse-plugin</packaging>
+	
+	<build>
+		<plugins>
+	    	<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-antrun-plugin</artifactId>
+		        <configuration>
+		          <tasks>
+		            <taskdef resource="net/sf/antcontrib/antcontrib.properties"
+		              classpathref="maven.plugin.classpath" />
+		            <ant antfile="${basedir}/build.main.xml">
+		              <target name="all"/>
+		            </ant>
+		          </tasks>
+		        </configuration>
+		        <dependencies>
+		          <dependency>
+		            <groupId>ant-contrib</groupId>
+		            <artifactId>ant-contrib</artifactId>
+		            <version>1.0b3</version>
+		          </dependency>
+		        </dependencies>
+	        </plugin>
+    	</plugins>
+    </build>
 </project>
