@@ -41,4 +41,16 @@
 
     <!-- Main target -->
     <target name="all" depends="spoofaximp.default.ctree"/>
+	
+	<target name="shell-all" if="compile.classpath">
+		<property name="eclipse.spoofaximp.jars" value="utils" />
+		<mkdir dir="${eclipse.spoofaximp.jars}" />
+		<copy todir="${eclipse.spoofaximp.jars}" flatten="true">
+			<path><pathelement path="${compile.classpath}"/></path>
+		</copy>
+
+		<antcall target="all"/>
+		
+		<delete dir="${eclipse.spoofaximp.jars}" />
+	</target>
 </project>
