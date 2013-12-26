@@ -45,7 +45,7 @@
 		</execution>
               </executions>
               <configuration>
-		<executable>sh</executable>
+		<executable>bash</executable>
 		<arguments>
 		  <argument>build.main.sh</argument>
 		  <argument>classpath</argument>
