@@ -3,6 +3,7 @@
 CP=`cat $1`
 CP_=$(echo $CP | tr ":" "\n")
 
+echo $CP
 for path in $CP_ ; do
   if [[ "$path" == *"org.strategoxt.imp.nativebundle"* ]]; then
     NATIVE_JAR=$path
