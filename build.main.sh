@@ -5,7 +5,7 @@ CP_=$(echo $CP | tr ":" "\n")
 
 for path in $CP_ ; do
   MATCH=`echo $path | sed 's/.*org\.strategoxt\.imp\.nativebundle.*/ok/'`
-  if [ "$MATCH" == "ok" ]; then
+  if [ "$MATCH" = "ok" ]; then
     NATIVE_JAR=$path
   fi
 done
