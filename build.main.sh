@@ -1,5 +1,7 @@
 #!/bin/sh
 
+BASEDIR=`pwd $(dirname $0)`
+
 CP=`cat $1`
 CP_=$(echo $CP | tr ":" "\n")
 
@@ -13,8 +15,15 @@ done
 mkdir native
 (cd native && jar xf $NATIVE_JAR)
 
-chmod +x native/native/linux/sdf2table
-LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$CP -Declipse.spoofaximp.nativeprefix=native/native/linux/ shell-all \
+OS='linux'
+UNAME=`uname`
+if [ "$UNAME" = "Darwin" ]; then
+  OS="macosx"
+fi
+
+chmod +x native/native/$OS/sdf2table
+chmod +x native/native/$OS/implodePT
+LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$CP -Declipse.spoofaximp.nativeprefix=$BASEDIR/native/native/$OS/ shell-all \
 && rm -rf native \
 && rm $1
 
