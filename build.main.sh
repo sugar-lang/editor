@@ -1,15 +1,15 @@
-#!/bin/bash
+#!/bin/sh
 
 CP=`cat $1`
 CP_=$(echo $CP | tr ":" "\n")
 
 for path in $CP_ ; do
-  if [[ "$path" == *"org.strategoxt.imp.nativebundle"* ]]; then
+  MATCH=`echo $path | sed 's/.*org\.strategoxt\.imp\.nativebundle.*/ok/'`
+  if [ "$MATCH" == "ok" ]; then
     NATIVE_JAR=$path
   fi
 done
 
-echo $NATIVE_JAR
 mkdir native
 (cd native && jar xf $NATIVE_JAR)
 
