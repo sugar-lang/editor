@@ -13,6 +13,7 @@ done
 mkdir native
 (cd native && jar xf $NATIVE_JAR)
 
+chmod +x native/native/linux/sdf2table
 LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$CP -Declipse.spoofaximp.nativeprefix=native/native/linux/ shell-all \
 && rm -rf native \
 && rm $1
