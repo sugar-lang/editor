@@ -6,6 +6,6 @@ import org.sugarj.transformations.analysis.AnalysisDataInterop;
 public class InteropRegisterer extends JavaInteropRegisterer {
 
   public InteropRegisterer() {
-    super(AnalysisDataInterop.instance.getStrategies());
+    super(new AnalysisDataInterop().getStrategies());
   }
 }
