@@ -27,4 +27,3 @@ LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$CP -Declipse.spoof
 && rm -rf native \
 && rm $1
 
-

@@ -7,4 +7,8 @@ context-free start-symbols
 templates
   
   Start.Dummy = <>
+  End.Dummy = <>
+  
+priorities
+  Start.Dummy > End.Dummy
 

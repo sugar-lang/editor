@@ -5,6 +5,12 @@ exports
 
   context-free syntax
      -> Start {cons("Dummy")}
+     -> End   {cons("Dummy")}
 
   context-free syntax
     CONTENTCOMPLETE -> Start {cons("COMPLETION-Start")}
+    CONTENTCOMPLETE -> End   {cons("COMPLETION-End")}
+
+  priorities
+    -> Start >
+    -> End
