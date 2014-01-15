@@ -29,3 +29,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: org.sugarj.editor
 Eclipse-RegisterBuddy: org.strategoxt.imp.runtime
+Eclipse-BundleShape: dir

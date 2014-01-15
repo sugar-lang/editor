@@ -35,3 +35,5 @@ lib-refactoring/*.generated.str
 /bin
 /bin
 /include
+/.cache
+/include
