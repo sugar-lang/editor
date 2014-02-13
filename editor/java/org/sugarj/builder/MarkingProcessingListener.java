@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.spoofax.jsglr.shared.BadTokenException;
+import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Result;
 import org.sugarj.util.ProcessingListener;
@@ -51,18 +52,20 @@ public class MarkingProcessingListener extends ProcessingListener {
   @Override
   public void processingDone(Result result) {
     try {
-      IResource resource = getResource(result.getSourceFile());
-      if (resource == null)
-        return;
-      
-      for (String error : result.getCollectedErrors()) {
-        IMarker marker = resource.createMarker(IMarker.PROBLEM);
-        marker.setAttribute(IMarker.MESSAGE, "compilation failed: " + error);
-      }
-      
-      for (BadTokenException error : result.getParseErrors()) {
-        IMarker marker = resource.createMarker(IMarker.PROBLEM);
-        marker.setAttribute(IMarker.MESSAGE, "parsing failed: " + error.getLocalizedMessage());
+      for (RelativePath sourceFile : result.getSourceArtifacts()) {
+        IResource resource = getResource(sourceFile);
+        if (resource == null)
+          continue;
+        
+        for (String error : result.getCollectedErrors()) {
+          IMarker marker = resource.createMarker(IMarker.PROBLEM);
+          marker.setAttribute(IMarker.MESSAGE, "compilation failed: " + error);
+        }
+        
+        for (BadTokenException error : result.getParseErrors()) {
+          IMarker marker = resource.createMarker(IMarker.PROBLEM);
+          marker.setAttribute(IMarker.MESSAGE, "parsing failed: " + error.getLocalizedMessage());
+        }
       }
     } catch (CoreException e) {
     }
