@@ -1,6 +1,5 @@
 package org.sugarj.editor;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,8 +74,8 @@ public class SugarLangParser extends JSGLRI {
     return schedulingRules.get(nextSchedulingRule++);
   }
   
-  private RelativePath sourceFile;
-//  private Result result;
+  private RelativePath actualSourceFile;
+  private Result result = PARSE_FAILURE_RESULT;
 //  private JSGLRI parser;
 //  private Path parserTable;
   
@@ -84,6 +83,16 @@ public class SugarLangParser extends JSGLRI {
     super(parser.getParseTable(), parser.getStartSymbol(), parser.getController());
   }
   
+  private void fetchResult() {
+	assert isInitialized();
+	if (result == PARSE_FAILURE_RESULT || result.hasPersistentVersionChanged() || !result.isParseResult())
+	  result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(actualSourceFile.getRelativePath()), environment);
+  }
+  
+  private Result getResult() {
+    fetchResult();
+    return result;
+  }
   
   @Override
   protected IStrategoTerm doParse(String input, String filename) throws IOException {
@@ -93,36 +102,33 @@ public class SugarLangParser extends JSGLRI {
     
     if (!BaseLanguageRegistry.getInstance().isRegistered(FileCommands.getExtension(filename))) {
       Log.log.logErr("Unknown source-file extension " + FileCommands.getExtension(filename), Log.ALWAYS);
-      return parseFailureResult(filename).getSugaredSyntaxTree();
+      return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     }
     
     RelativePath sourceFile = ModuleSystemCommands.locateSourceFile(filename, environment.getSourcePath());
     if (sourceFile == null)
       throw new IllegalArgumentException("Cannot find source file for path " + filename);
-    this.sourceFile = sourceFile;
-    String modulePath = FileCommands.dropExtension(sourceFile.getRelativePath());
-
+    
     RelativePath actualSourceFile = new RelativePath(environment.getParseBin(), sourceFile.getRelativePath());
     if (!FileCommands.exists(actualSourceFile) || !FileCommands.readFileAsString(actualSourceFile).equals(input))
       FileCommands.writeToFile(actualSourceFile, input);
     Map<RelativePath, Integer> editedSourceArtifacts = new HashMap<>();
     editedSourceArtifacts.put(actualSourceFile, environment.getStamper().stampOf(actualSourceFile));
-    
-    Result result = ModuleSystemCommands.locateResult(modulePath, environment);
-    if (result == null)
-      result = parseFailureResult(filename);
 
+    this.actualSourceFile = actualSourceFile;
+    fetchResult();
+    
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
       return parseCompletionTree(input, filename, result);
     if (result.getSugaredSyntaxTree() != null && result.isConsistent(editedSourceArtifacts))
         return result.getSugaredSyntaxTree();
     if (result.hasFailed())
-      return parseFailureResult(filename).getSugaredSyntaxTree();
+      return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     
     if (!isPending(sourceFile)) 
       scheduleParse(input, actualSourceFile);
     
-    return result.getSugaredSyntaxTree() == null ? parseFailureResult(filename).getSugaredSyntaxTree() : result.getSugaredSyntaxTree();
+    return result.getSugaredSyntaxTree() == null ? PARSE_FAILURE_RESULT.getSugaredSyntaxTree() : result.getSugaredSyntaxTree();
   }
   
   private synchronized void scheduleParse(final String input, final RelativePath sourceFile) {
@@ -186,8 +192,8 @@ public class SugarLangParser extends JSGLRI {
   
   @Override
   public Set<org.spoofax.jsglr.shared.BadTokenException> getCollectedErrors() {
-    Result result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment);
-    if (result == null)
+    Result result = getResult();
+    if (result.getParseErrors().isEmpty())
       return Collections.emptySet();
     
     Set<org.spoofax.jsglr.shared.BadTokenException> res = new HashSet<org.spoofax.jsglr.shared.BadTokenException>();
@@ -198,13 +204,15 @@ public class SugarLangParser extends JSGLRI {
 
 
   public List<IStrategoTerm> getEditorServices() {
-    final List<IStrategoTerm> empty = Collections.emptyList();
-    Result result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment);
-    return result == null ? empty : result.getEditorServices();
+    if (result != null && !result.hasPersistentVersionChanged())
+      return result.getEditorServices();
+	  
+    
+    return result == null ? Collections.<IStrategoTerm>emptyList() : result.getEditorServices();
   }
   
   public boolean isInitialized() {
-    return sourceFile != null;
+    return actualSourceFile != null;
   }
 
   private static boolean isPending(RelativePath sourceFile) {
@@ -222,7 +230,8 @@ public class SugarLangParser extends JSGLRI {
     }
   }
   
-  private Result parseFailureResult(String filename) throws FileNotFoundException, IOException {
+  private final static Result PARSE_FAILURE_RESULT;
+  static {
     ITermFactory f = ATermCommands.factory;
     IStrategoTerm tbl =
       f.makeAppl(f.makeConstructor("parse-table", 5), 
@@ -252,7 +261,7 @@ public class SugarLangParser extends JSGLRI {
     r.setSugaredSyntaxTree(term);
     r.setDesugaredSyntaxTree(term);
     r.registerEditorDesugarings(new AbsolutePath(StdLib.failureTrans.getAbsolutePath()));
-    return r;
+    PARSE_FAILURE_RESULT = r;
   }
   
   private IStrategoTerm parseCompletionTree(String input, String filename, Result result) throws IOException {
