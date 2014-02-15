@@ -74,7 +74,7 @@ public class SugarLangParser extends JSGLRI {
     return schedulingRules.get(nextSchedulingRule++);
   }
   
-  private RelativePath actualSourceFile;
+  private RelativePath sourceFile;
   private Result result = PARSE_FAILURE_RESULT;
 //  private JSGLRI parser;
 //  private Path parserTable;
@@ -86,7 +86,7 @@ public class SugarLangParser extends JSGLRI {
   private void fetchResult() {
 	assert isInitialized();
 	if (result == PARSE_FAILURE_RESULT || result.hasPersistentVersionChanged() || !result.isParseResult()) {
-	  Result result2 = ModuleSystemCommands.locateResult(FileCommands.dropExtension(actualSourceFile.getRelativePath()), environment);
+	  Result result2 = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment);
 	  if (result2 != null)
 		  result = result2;
 	}
@@ -112,13 +112,9 @@ public class SugarLangParser extends JSGLRI {
     if (sourceFile == null)
       throw new IllegalArgumentException("Cannot find source file for path " + filename);
     
-    RelativePath actualSourceFile = new RelativePath(environment.getParseBin(), sourceFile.getRelativePath());
-    if (!FileCommands.exists(actualSourceFile) || !FileCommands.readFileAsString(actualSourceFile).equals(input))
-      FileCommands.writeToFile(actualSourceFile, input);
-    Map<RelativePath, Integer> editedSourceArtifacts = new HashMap<>();
-    editedSourceArtifacts.put(actualSourceFile, environment.getStamper().stampOf(actualSourceFile));
-
-    this.actualSourceFile = actualSourceFile;
+    this.sourceFile = sourceFile;
+    Map<RelativePath, Integer> editedSourceArtifacts = computeEditedSourceArtifacts(input, sourceFile);
+    
     fetchResult();
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
@@ -129,10 +125,29 @@ public class SugarLangParser extends JSGLRI {
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     
     if (!isPending(sourceFile)) 
-      scheduleParse(input, actualSourceFile);
+      scheduleParse(input, sourceFile);
     
     return result.getSugaredSyntaxTree() == null ? PARSE_FAILURE_RESULT.getSugaredSyntaxTree() : result.getSugaredSyntaxTree();
   }
+
+private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, RelativePath sourceFile) throws IOException {
+	RelativePath editedSourceFile = new RelativePath(environment.getParseBin(), sourceFile.getRelativePath());
+	boolean editedExists = FileCommands.exists(editedSourceFile);
+	
+	boolean wasEdited;
+	if (editedExists)
+	  wasEdited = !FileCommands.readFileAsString(editedSourceFile).equals(input);
+	else
+	  wasEdited = !FileCommands.readFileAsString(sourceFile).equals(input);
+
+	if (!wasEdited)
+	  return Collections.emptyMap();
+
+	FileCommands.writeToFile(editedSourceFile, input);
+	Map<RelativePath, Integer> editedSourceArtifacts = new HashMap<>();
+  editedSourceArtifacts.put(sourceFile, environment.getStamper().stampOf(editedSourceFile));
+	return editedSourceArtifacts;
+}
   
   private synchronized void scheduleParse(final String input, final RelativePath sourceFile) {
     if (environment == null) {
@@ -215,7 +230,7 @@ public class SugarLangParser extends JSGLRI {
   }
   
   public boolean isInitialized() {
-    return actualSourceFile != null;
+    return sourceFile != null;
   }
 
   private static boolean isPending(RelativePath sourceFile) {
@@ -258,9 +273,11 @@ public class SugarLangParser extends JSGLRI {
     IStrategoTerm term = ATermCommands.makeList("CompilationUnit", tok);
     term.putAttachment(new AnalysisDataAttachment());
     
-    Result r = new Result() {
+    class FailureResult extends Result {
+      public FailureResult() { init(); }
       @Override public boolean isConsistentShallow() { return false; };
-    };
+    }
+    Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);
     r.setDesugaredSyntaxTree(term);
     r.registerEditorDesugarings(new AbsolutePath(StdLib.failureTrans.getAbsolutePath()));
