@@ -1,5 +1,7 @@
 package org.sugarj.builder;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -39,12 +41,14 @@ public class MarkingProcessingListener extends ProcessingListener {
   }
   
   @Override
-  public void processingStarts(RelativePath sourceFile) {
-    try {
-      IResource resource = getResource(sourceFile);
-      if (resource != null)
-        resource.deleteMarkers(IMarker.MARKER, true, IResource.DEPTH_INFINITE);
-    } catch (CoreException e) {
+  public void processingStarts(Set<RelativePath> sourceFiles) {
+    for (RelativePath sourceFile : sourceFiles) {
+      try {
+        IResource resource = getResource(sourceFile);
+        if (resource != null)
+          resource.deleteMarkers(IMarker.MARKER, true, IResource.DEPTH_INFINITE);
+      } catch (CoreException e) {
+      }
     }
   }
 

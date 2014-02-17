@@ -40,6 +40,7 @@ import org.sugarj.common.Log;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
+import org.sugarj.driver.DriverParameters;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
 import org.sugarj.driver.RetractableTreeBuilder;
@@ -155,7 +156,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
       return;
     }
     
-    final AbstractBaseLanguage factory = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(sourceFile));
+    final AbstractBaseLanguage baseLang = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(sourceFile));
 
     SugarLangParser.setPending(sourceFile, true);
     
@@ -165,7 +166,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
         monitor.beginTask("parse " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
         boolean ok = false;
         try {
-          runParser(input, sourceFile, factory, monitor);
+          runParser(input, sourceFile, baseLang, monitor);
           ok = true;
         } catch (InterruptedException e) {
         } catch (Exception e) {
@@ -184,7 +185,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
     parseJob.schedule();
   }
   
-  private Result runParser(String input, RelativePath sourceFile, AbstractBaseLanguage factory, IProgressMonitor monitor) throws InterruptedException {
+  private Result runParser(String input, RelativePath sourceFile, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
@@ -194,7 +195,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
     SugarLangConsole.activateConsoleOnce();
     
     try {
-      return Driver.run(input, sourceFile, environment, monitor, factory);
+      return Driver.run(DriverParameters.create(environment, baseLang, sourceFile, monitor));
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {

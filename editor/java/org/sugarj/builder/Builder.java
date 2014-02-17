@@ -37,6 +37,7 @@ import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
+import org.sugarj.driver.DriverParameters;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
 import org.sugarj.editor.SugarLangConsole;
@@ -177,7 +178,7 @@ public class Builder extends IncrementalProjectBuilder {
             RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             Result res = Result.read(environment.getStamper(), depFile);
             if (res == null || !res.isConsistent())
-              res = Driver.run(input.sourceFile, environment, monitor, input.baseLang);
+              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
             
             IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
             for (IWorkbenchWindow workbenchWindow : workbenchWindows)
