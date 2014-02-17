@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -114,43 +115,46 @@ public class SugarLangParser extends JSGLRI {
       throw new IllegalArgumentException("Cannot find source file for path " + filename);
     
     this.sourceFile = sourceFile;
-    Map<RelativePath, Integer> editedSourceArtifacts = computeEditedSourceArtifacts(input, sourceFile);
+    Map<RelativePath, String> editedSources = computeEditedSources(input, sourceFile);
+    
     
     fetchResult();
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
       return parseCompletionTree(input, filename, result);
-    if (result.getSugaredSyntaxTree() != null && result.isConsistent(editedSourceArtifacts))
+    if (result.getSugaredSyntaxTree() != null && result.isConsistent(editedSourceStamps(editedSources)))
         return result.getSugaredSyntaxTree();
     if (result.hasFailed())
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     
     if (!isPending(sourceFile)) 
-      scheduleParse(input, sourceFile);
+      scheduleParse(sourceFile, editedSources);
     
     return result.getSugaredSyntaxTree() == null ? PARSE_FAILURE_RESULT.getSugaredSyntaxTree() : result.getSugaredSyntaxTree();
   }
 
-private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, RelativePath sourceFile) throws IOException {
-	RelativePath editedSourceFile = new RelativePath(environment.getParseBin(), sourceFile.getRelativePath());
-	boolean editedExists = FileCommands.exists(editedSourceFile);
-	
-	boolean wasEdited;
-	if (editedExists)
-	  wasEdited = !FileCommands.readFileAsString(editedSourceFile).equals(input);
-	else
-	  wasEdited = !FileCommands.readFileAsString(sourceFile).equals(input);
-
-	if (!wasEdited)
-	  return Collections.emptyMap();
-
-	FileCommands.writeToFile(editedSourceFile, input);
-	Map<RelativePath, Integer> editedSourceArtifacts = new HashMap<>();
-  editedSourceArtifacts.put(sourceFile, environment.getStamper().stampOf(editedSourceFile));
-	return editedSourceArtifacts;
-}
+  private Map<RelativePath, String> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
+    if (FileCommands.exists(sourceFile) && input.equals(FileCommands.readFileAsString(sourceFile)))
+      return Collections.emptyMap();
+    
+  	return Collections.singletonMap(sourceFile, input);
+  }
   
-  private synchronized void scheduleParse(final String input, final RelativePath sourceFile) {
+  private Map<RelativePath, Integer> editedSourceStamps(Map<RelativePath, String> editedSources) throws IOException {
+    Map<RelativePath, Integer> editedSourceArtifacts = new HashMap<>();
+    for (Entry<RelativePath, String> e : editedSources.entrySet()) {
+  
+      RelativePath editedSourceFile = new RelativePath(environment.getParseBin(), e.getKey().getRelativePath());
+      if (!FileCommands.exists(editedSourceFile) || !FileCommands.readFileAsString(editedSourceFile).equals(e.getValue()))
+        FileCommands.writeToFile(editedSourceFile, e.getValue());
+      
+      editedSourceArtifacts.put(e.getKey(), environment.getStamper().stampOf(editedSourceFile));
+    }
+    return editedSourceArtifacts;
+  }
+
+  
+  private synchronized void scheduleParse(final RelativePath sourceFile, final Map<RelativePath, String> editedSources) {
     if (environment == null) {
       getController().scheduleParserUpdate(200, false);
       return;
@@ -166,7 +170,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
         monitor.beginTask("parse " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
         boolean ok = false;
         try {
-          runParser(input, sourceFile, baseLang, monitor);
+          runParser(sourceFile, editedSources, baseLang, monitor);
           ok = true;
         } catch (InterruptedException e) {
         } catch (Exception e) {
@@ -185,7 +189,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
     parseJob.schedule();
   }
   
-  private Result runParser(String input, RelativePath sourceFile, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
+  private Result runParser(RelativePath sourceFile, Map<RelativePath, String> editedSources, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
@@ -195,7 +199,7 @@ private Map<RelativePath, Integer> computeEditedSourceArtifacts(String input, Re
     SugarLangConsole.activateConsoleOnce();
     
     try {
-      return Driver.run(DriverParameters.create(environment, baseLang, sourceFile, monitor));
+      return Driver.run(DriverParameters.create(environment, baseLang, sourceFile, editedSources, monitor));
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {

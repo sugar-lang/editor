@@ -2,6 +2,7 @@ package org.sugarj.builder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +179,7 @@ public class Builder extends IncrementalProjectBuilder {
             RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             Result res = Result.read(environment.getStamper(), depFile);
             if (res == null || !res.isConsistent())
-              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
+              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, Collections.<RelativePath, String>emptyMap(), monitor));
             
             IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
             for (IWorkbenchWindow workbenchWindow : workbenchWindows)
