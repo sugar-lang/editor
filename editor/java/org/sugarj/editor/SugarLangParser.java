@@ -85,7 +85,7 @@ public class SugarLangParser extends JSGLRI {
     super(parser.getParseTable(), parser.getStartSymbol(), parser.getController());
   }
   
-  private void fetchResult() {
+  private void fetchResult() throws IOException {
 	assert isInitialized();
 	if (result == PARSE_FAILURE_RESULT || result.hasPersistentVersionChanged() || !result.isParseResult()) {
 	  Result result2 = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment);
@@ -95,7 +95,11 @@ public class SugarLangParser extends JSGLRI {
   }
   
   private Result getResult() {
-    fetchResult();
+    try {
+      fetchResult();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return result;
   }
   
@@ -279,6 +283,7 @@ public class SugarLangParser extends JSGLRI {
     term.putAttachment(new AnalysisDataAttachment());
     
     class FailureResult extends Result {
+      private static final long serialVersionUID = 1015028752880035858L;
       public FailureResult() { init(); }
       @Override public boolean isConsistentShallow() { return false; };
     }
