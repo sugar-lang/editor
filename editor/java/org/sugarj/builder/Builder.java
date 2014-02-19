@@ -43,6 +43,7 @@ import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
 import org.sugarj.editor.SugarLangConsole;
 import org.sugarj.editor.SugarLangProjectEnvironment;
+import org.sugarj.util.Pair;
 import org.sugarj.util.ProcessingListener;
 
 /**
@@ -178,9 +179,9 @@ public class Builder extends IncrementalProjectBuilder {
 
             RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
-            Result res = Result.read(environment.getStamper(), depFile, editedFile, true, Collections.<RelativePath, Integer>emptyMap());
-            if (res == null || !res.isConsistent())
-              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, Collections.<RelativePath, String>emptyMap(), monitor));
+            Pair<Result, Boolean> res = Result.read(environment.getStamper(), depFile, editedFile, true, Collections.<RelativePath, Integer>emptyMap());
+            if (res.a == null || !res.b)
+              res.a = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
             
             IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
             for (IWorkbenchWindow workbenchWindow : workbenchWindows)
