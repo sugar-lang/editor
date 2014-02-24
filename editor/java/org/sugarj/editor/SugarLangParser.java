@@ -43,6 +43,7 @@ import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
 import org.sugarj.driver.RetractableTreeBuilder;
 import org.sugarj.stdlib.StdLib;
+import org.sugarj.transformations.analysis.AnalysisDataInterop;
 
 /**
  * @author Sebastian Erdweg <seba at informatik uni-marburg de>
@@ -235,6 +236,7 @@ public class SugarLangParser extends JSGLRI {
     Tokenizer tokenizer = new Tokenizer(" ", " ", new KeywordRecognizer(pt) {});
     Token tok = tokenizer.makeToken(0, IToken.TK_UNKNOWN, true);
     IStrategoTerm term = ATermCommands.makeList("CompilationUnit", tok);
+    term.putAttachment(new AnalysisDataInterop.AnalysisDataAttachment());
     
     Result r = new Result() {
       public boolean isUpToDate(int h, Environment env) { return false; }
