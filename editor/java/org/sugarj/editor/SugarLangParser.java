@@ -36,6 +36,7 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
+import org.sugarj.common.cleardep.Mode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
@@ -84,8 +85,10 @@ public class SugarLangParser extends JSGLRI {
   
   @Override
   protected IStrategoTerm doParse(String input, String filename) throws IOException {
-    if (environment == null && getController().getProject() != null)
+    if (environment == null && getController().getProject() != null) {
       environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject());
+      environment.setForEditor(true);
+    }
     assert environment != null;
     
     if (!BaseLanguageRegistry.getInstance().isRegistered(FileCommands.getExtension(filename))) {
@@ -186,6 +189,8 @@ public class SugarLangParser extends JSGLRI {
   
   public void setEnvironment(Environment environment) {
     this.environment = environment;
+    if (this.environment != null)
+      this.environment.setForEditor(true);
   }
   
   @Override
@@ -255,7 +260,7 @@ public class SugarLangParser extends JSGLRI {
     class FailureResult extends Result {
       private static final long serialVersionUID = 1015028752880035858L;
       public FailureResult() { init(); }
-      @Override public boolean isConsistentShallow() { return false; };
+      @Override public boolean isConsistentShallow(Mode mode) { return false; };
     }
     Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);
