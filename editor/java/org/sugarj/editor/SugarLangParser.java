@@ -36,7 +36,7 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
-import org.sugarj.common.cleardep.Mode;
+import org.sugarj.common.cleardep.mode.Mode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
@@ -260,7 +260,7 @@ public class SugarLangParser extends JSGLRI {
     class FailureResult extends Result {
       private static final long serialVersionUID = 1015028752880035858L;
       public FailureResult() { init(); }
-      @Override public boolean isConsistentShallow(Mode mode) { return false; };
+      @Override public boolean isConsistentShallow(Map<RelativePath, Integer> editedSourceFiles, Mode mode) { return false; };
     }
     Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);

@@ -34,7 +34,7 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
-import org.sugarj.common.cleardep.Mode;
+import org.sugarj.common.cleardep.mode.DoCompileMode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -154,7 +154,8 @@ public class Builder extends IncrementalProjectBuilder {
     final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     environment.setGenerateFiles(true);
     environment.setForEditor(false);
-    final Mode mode = new Mode(true, false);
+    final Map<RelativePath, Integer> editedSourceFiles = Collections.emptyMap();
+    final DoCompileMode mode = new DoCompileMode(null, true);
     
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
@@ -182,7 +183,7 @@ public class Builder extends IncrementalProjectBuilder {
 
             RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
-            Pair<Result, Boolean> res = Result.read(environment.getStamper(), depFile, editedFile, mode);
+            Pair<Result, Boolean> res = Result.read(environment.getStamper(), depFile, editedFile, editedSourceFiles, mode);
             if (res.a == null || !res.b)
               res.a = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
             
