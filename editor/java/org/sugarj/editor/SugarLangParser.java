@@ -103,7 +103,7 @@ public class SugarLangParser extends JSGLRI {
     this.sourceFile = sourceFile;
     Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> editedSources = computeEditedSources(input, sourceFile);
     
-    Pair<Result, Boolean> res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, editedSources.b);
+    Pair<Result, Boolean> res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode(), editedSources.b);
     if (res.a != null)
       result = res.a;
     
