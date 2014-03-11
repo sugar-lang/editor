@@ -67,7 +67,7 @@ public class SugarLangProjectEnvironment {
         if (reqJavaProject != null) {
           Environment projEnv = makeProjectEnvironment(reqJavaProject);
 //          env.getSourcePath().addAll(projEnv.getSourcePath());
-          env.addToIncludePath(projEnv.getParseBin());
+          env.addToIncludePath(projEnv.getCompileBin());
         }
       }
     
