@@ -68,6 +68,10 @@ public class SugarLangProjectEnvironment {
           Environment projEnv = makeProjectEnvironment(reqJavaProject);
 //          env.getSourcePath().addAll(projEnv.getSourcePath());
           env.addToIncludePath(projEnv.getCompileBin());
+          
+          // XXX due to transitive imports in SDF and Stratego
+          for (Path p : projEnv.getIncludePath())
+            env.addToIncludePath(p);
         }
       }
     
