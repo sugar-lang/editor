@@ -1,5 +1,7 @@
 package org.sugarj.builder;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -39,30 +41,34 @@ public class MarkingProcessingListener extends ProcessingListener {
   }
   
   @Override
-  public void processingStarts(RelativePath sourceFile) {
-    try {
-      IResource resource = getResource(sourceFile);
-      if (resource != null)
-        resource.deleteMarkers(IMarker.MARKER, true, IResource.DEPTH_INFINITE);
-    } catch (CoreException e) {
+  public void processingStarts(Set<RelativePath> sourceFiles) {
+    for (RelativePath sourceFile : sourceFiles) {
+      try {
+        IResource resource = getResource(sourceFile);
+        if (resource != null)
+          resource.deleteMarkers(IMarker.MARKER, true, IResource.DEPTH_INFINITE);
+      } catch (CoreException e) {
+      }
     }
   }
 
   @Override
   public void processingDone(Result result) {
     try {
-      IResource resource = getResource(result.getSourceFile());
-      if (resource == null)
-        return;
-      
-      for (String error : result.getCollectedErrors()) {
-        IMarker marker = resource.createMarker(IMarker.PROBLEM);
-        marker.setAttribute(IMarker.MESSAGE, "compilation failed: " + error);
-      }
-      
-      for (BadTokenException error : result.getParseErrors()) {
-        IMarker marker = resource.createMarker(IMarker.PROBLEM);
-        marker.setAttribute(IMarker.MESSAGE, "parsing failed: " + error.getLocalizedMessage());
+      for (RelativePath sourceFile : result.getSourceArtifacts()) {
+        IResource resource = getResource(sourceFile);
+        if (resource == null)
+          continue;
+        
+        for (String error : result.getCollectedErrors()) {
+          IMarker marker = resource.createMarker(IMarker.PROBLEM);
+          marker.setAttribute(IMarker.MESSAGE, "compilation failed: " + error);
+        }
+        
+        for (BadTokenException error : result.getParseErrors()) {
+          IMarker marker = resource.createMarker(IMarker.PROBLEM);
+          marker.setAttribute(IMarker.MESSAGE, "parsing failed: " + error.getLocalizedMessage());
+        }
       }
     } catch (CoreException e) {
     }

@@ -8,6 +8,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.strategoxt.eclipse.ant.StrategoJarAntPropertyProvider;
 import org.sugarj.common.Environment;
+import org.sugarj.common.cleardep.Stamper;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -34,7 +35,7 @@ public class SugarLangProjectEnvironment {
     }
     
     private static Environment makeProjectEnvironment(IJavaProject project) throws JavaModelException {
-      Environment env = new Environment(false, StdLib.stdLibDir);
+      Environment env = new Environment(false, StdLib.stdLibDir, Stamper.DEFAULT);
       
       IPath fullPath = project.getProject().getFullPath();
       Path root = new AbsolutePath(project.getProject().getLocation().makeAbsolute().toString());
@@ -66,7 +67,11 @@ public class SugarLangProjectEnvironment {
         if (reqJavaProject != null) {
           Environment projEnv = makeProjectEnvironment(reqJavaProject);
 //          env.getSourcePath().addAll(projEnv.getSourcePath());
-          env.addToIncludePath(projEnv.getParseBin());
+          env.addToIncludePath(projEnv.getCompileBin());
+          
+          // XXX due to transitive imports in SDF and Stratego
+          for (Path p : projEnv.getIncludePath())
+            env.addToIncludePath(p);
         }
       }
     
