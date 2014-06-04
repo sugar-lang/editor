@@ -4,7 +4,7 @@
 /.cache/
 
 # Spoofax stuff
-/editor/*.generated.esv
+#/editor/*.generated.esv
 /editor/java/trans
 /include/
 /lib/*.generated.str
