@@ -34,6 +34,7 @@
     <condition property="build.strategoxt.sdf" value="${eclipse.spoofaximp.nativeprefix}" else="">
         <isset property="eclipse.spoofaximp.nativeprefix"/>
     </condition>
+	<echo message="SDF Path:${build.strategoxt.sdf}"/>
     <property name="build.strategoxt.stratego" location="${user.home}/.nix-profile/bin"/>
 		
     <!-- used for building inside of Eclipse -->
