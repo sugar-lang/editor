@@ -37,7 +37,6 @@ import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
 import org.sugarj.common.cleardep.mode.Mode;
-import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
@@ -77,6 +76,7 @@ public class SugarLangParser extends JSGLRI {
   }
   
   private RelativePath sourceFile;
+  private Result oldResult = PARSE_FAILURE_RESULT;
   private Result result = PARSE_FAILURE_RESULT;
   
   public SugarLangParser(JSGLRI parser) {
@@ -104,20 +104,37 @@ public class SugarLangParser extends JSGLRI {
     Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> editedSources = computeEditedSources(input, sourceFile);
     
     Pair<Result, Boolean> res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode(), editedSources.b);
+    if (result.getSugaredSyntaxTree() != null)
+      oldResult = result;
     if (res.a != null)
       result = res.a;
     
-    if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
+    if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null) {
+      Log.log.log("SL-PARSER: completion", Log.ALWAYS);
       return parseCompletionTree(input, filename, result);
-    if (res.b)
-        return result.getSugaredSyntaxTree();
-    if (result.hasFailed())
+    }
+    if (res.b) {
+      Log.log.log("SL-PARSER: prepared " + result.getSugaredSyntaxTree(), Log.ALWAYS);
+      return result.getSugaredSyntaxTree();
+    }
+    if (result.hasFailed()) {
+      Log.log.log("SL-PARSER: failed " + result.getSugaredSyntaxTree(), Log.ALWAYS);
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
+    }
     
     if (!isPending(sourceFile)) 
       scheduleParse(sourceFile, editedSources.a, editedSources.b);
     
-    return result.getSugaredSyntaxTree() == null ? PARSE_FAILURE_RESULT.getSugaredSyntaxTree() : result.getSugaredSyntaxTree();
+    if (result.getSugaredSyntaxTree() == null && oldResult.getSugaredSyntaxTree() != null) {
+      Log.log.log("SL-PARSER: scheduled&failed&old " + oldResult.getSugaredSyntaxTree(), Log.ALWAYS);
+      return oldResult.getSugaredSyntaxTree();
+    }
+    if (result.getSugaredSyntaxTree() == null) {
+      Log.log.log("SL-PARSER: scheduled&failed " + result.getSugaredSyntaxTree(), Log.ALWAYS);
+      return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
+    }
+    Log.log.log("SL-PARSER: scheduled&prepared " + result.getSugaredSyntaxTree(), Log.ALWAYS);
+    return result.getSugaredSyntaxTree();
   }
 
   private Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
@@ -265,7 +282,7 @@ public class SugarLangParser extends JSGLRI {
     Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);
     r.setDesugaredSyntaxTree(term);
-    r.registerEditorDesugarings(new AbsolutePath(StdLib.failureTrans.getAbsolutePath()));
+    r.registerEditorDesugarings(StdLib.failureTrans);
     PARSE_FAILURE_RESULT = r;
   }
   
