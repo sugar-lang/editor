@@ -8,8 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.eclipse.imp.language.ILanguageService;
 import org.spoofax.interpreter.terms.IStrategoAppl;
@@ -25,6 +23,7 @@ import org.strategoxt.imp.runtime.dynamicloading.DynamicParseController;
 import org.strategoxt.imp.runtime.dynamicloading.IDynamicLanguageService;
 import org.strategoxt.imp.runtime.parser.SGLRParseController;
 import org.strategoxt.imp.runtime.services.StrategoObserver;
+import org.strategoxt.imp.runtime.services.StrategoRuntimeFactory;
 import org.sugarj.common.path.AbsolutePath;
 
 /**
@@ -38,8 +37,6 @@ public class SugarLangDescriptor extends Descriptor {
   
   private List<IStrategoTerm> lastServices;
 
-  private ExecutorService reloadEditorExecutorService = Executors.newSingleThreadExecutor();
-  
   public SugarLangDescriptor(Descriptor baseDescriptor) throws BadDescriptorException {
     super(baseDescriptor.getDocument());
     baseDocument = baseDescriptor.getDocument();
@@ -51,9 +48,12 @@ public class SugarLangDescriptor extends Descriptor {
       Class<T> type, SGLRParseController controller)
       throws BadDescriptorException {
     
+    boolean servicesChanged = false;
+    
     if (controller != null && controller.getParser() instanceof SugarLangParser && ((SugarLangParser) controller.getParser()).isInitialized()) {
       List<IStrategoTerm> services = ((SugarLangParser) controller.getParser()).getEditorServices();
-      if (services != null && !services.equals(lastServices)) {
+      servicesChanged = services != null && !services.equals(lastServices);
+      if (servicesChanged) {
         setDocument(composeDefinitions(baseDocument, services));
         reloadEditors(controller);
         lastServices = services;
@@ -73,33 +73,12 @@ public class SugarLangDescriptor extends Descriptor {
 //    if (result instanceof IOnSaveService)
 //      result = (T) new SugarJOnSaveService(this, (IOnSaveService) result);
     
-    if (result instanceof StrategoObserver) {
-      initObserver((StrategoObserver) result);
-    }
+    if (servicesChanged && result instanceof StrategoObserver)
+      ((StrategoObserver) result).reinitialize(this);
     
     return result;
   }
 
-  private void initObserver(final StrategoObserver observer) {
-    reloadEditorExecutorService.execute(new Runnable() {
-      public void run() {
-        try {
-          observer.getLock().lockInterruptibly();
-          observer.setPrototypeAllowed(false);
-          // TODO next line needed?
-//          ((StrategoObserver) observer).getRuntime(); // eagerly initilize w/ current document
-        } catch (InterruptedException e) {
-          Environment.logException("could not reinitialize editor: interrupted", e);
-        } catch (Exception e) {
-          Environment.logException("could not reinitialize editor: exception", e);
-        }
-        finally {
-          observer.getLock().unlock();
-        }
-      }
-    });
-  }
-  
   private void reloadEditors(SGLRParseController controller) {
     simpleClearCache(controller);
     for (IDynamicLanguageService service : getActiveServices(controller)) {
@@ -131,7 +110,7 @@ public class SugarLangDescriptor extends Descriptor {
   private static IStrategoAppl composeDefinitions(IStrategoAppl base, List<IStrategoTerm> extensions) {
     IStrategoConstructor cons = base.getConstructor();
     if (cons.getName().equals("Module") && cons.getArity() == 3) {
-      ITermFactory factory = Environment.getTermFactory();
+      ITermFactory factory = StrategoRuntimeFactory.BASE_TERM_FACTORY;
       List<IStrategoTerm> allDefinitions = new ArrayList<IStrategoTerm>();
       addAll(allDefinitions, (IStrategoList) termAt(base, 2));
       allDefinitions.addAll(extensions);
