@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +51,6 @@ import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
 import org.sugarj.editor.SugarLangConsole;
 import org.sugarj.editor.SugarLangProjectEnvironment;
-import org.sugarj.util.Pair;
 import org.sugarj.util.ProcessingListener;
 
 /**
@@ -61,17 +59,6 @@ import org.sugarj.util.ProcessingListener;
  * @author Sebastian Erdweg <seba at informatik uni-marburg de>
  */
 public class Builder extends IncrementalProjectBuilder {
-
-  private class BuildInput {
-    public final IResource resource;
-    public final RelativePath sourceFile;
-    public final AbstractBaseLanguage baseLang;
-    public BuildInput(IResource resource, RelativePath path, AbstractBaseLanguage baseLang) {
-      this.resource = resource; 
-      this.sourceFile = path;
-      this.baseLang = baseLang;
-    }
-  }
 
 //  private static Map<IProject, ILock> buildLocks = new HashMap<IProject, ILock>();
 //  
@@ -120,7 +107,7 @@ public class Builder extends IncrementalProjectBuilder {
 
   private void fullBuild(IProgressMonitor monitor) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
-    final LinkedList<BuildInput> resources = new LinkedList<BuildInput>();
+    final Map<RelativePath, IResource> resources = new HashMap<>();
 
     try {
       getProject().accept(new IResourceVisitor() {
@@ -146,7 +133,7 @@ public class Builder extends IncrementalProjectBuilder {
               return false;
             }
               
-            resources.addFirst(new BuildInput(resource, sourceFile, languageReg.getBaseLanguage(resource.getFileExtension())));
+            resources.put(sourceFile, resource);
           }
           return true;
         }
@@ -158,7 +145,7 @@ public class Builder extends IncrementalProjectBuilder {
     build(monitor, resources, "project " + getProject().getName());
   }
 
-  private void build(IProgressMonitor monitor, final List<BuildInput> inputs, String what) {
+  private void build(IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
     final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     environment.setGenerateFiles(true);
@@ -182,15 +169,13 @@ public class Builder extends IncrementalProjectBuilder {
 //        getLock(getProject()).acquire();
                 
         Set<CompilationUnit> allUnitsToCompile = new HashSet<>();
-        Map<RelativePath, IResource> resources = new HashMap<>();
-        for (BuildInput input : inputs) {
-          resources.put(input.sourceFile, input.resource);
-          RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
-          RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
+        for (RelativePath sourceFile : resources.keySet()) {
+          RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
+          RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           try {
             Result res = Result.read(environment.getStamper(), depFile, editedFile, editedSourceFiles, mode);
             if (res == null)
-              res = Result.create(environment.getStamper(), depFile, environment.getCompileBin(), editedFile, environment.getParseBin(), Collections.singleton(input.sourceFile), editedSourceFiles, mode, null);
+              res = Result.create(environment.getStamper(), depFile, environment.getCompileBin(), editedFile, environment.getParseBin(), Collections.singleton(sourceFile), editedSourceFiles, mode, null);
             allUnitsToCompile.add(res);
           } catch (IOException e) {
             throw new RuntimeException(e);
