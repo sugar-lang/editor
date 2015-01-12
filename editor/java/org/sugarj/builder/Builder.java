@@ -38,7 +38,6 @@ import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
 import org.sugarj.common.cleardep.BuildSchedule;
 import org.sugarj.common.cleardep.BuildSchedule.Task;
-import org.sugarj.common.cleardep.BuildSchedule.TaskState;
 import org.sugarj.common.cleardep.BuildScheduleBuilder;
 import org.sugarj.common.cleardep.CompilationUnit;
 import org.sugarj.common.cleardep.mode.DoCompileMode;
@@ -187,43 +186,33 @@ public class Builder extends IncrementalProjectBuilder {
         
         try {
           for (Task task : schedule) {
-            boolean needsBuilding = task.needsToBeBuild(editedSourceFiles, mode);
-            
-            task.setState(TaskState.IN_PROGESS);
-            boolean failed = false;
+            if(!task.needsToBeBuild(editedSourceFiles, mode))
+              continue;
             
             Set<CompilationUnit> units = task.getUnitsToCompile();
             for (CompilationUnit unit : units) {
-              if (needsBuilding || !unit.isPersisted()) {
-                for (RelativePath sourceFile : unit.getSourceArtifacts()) {
-                  if (Thread.currentThread().isInterrupted()) throw new InterruptedException();  
-                  monitor.beginTask("compile " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
-  
-                  AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
+              for (RelativePath sourceFile : unit.getSourceArtifacts()) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedException();  
+                monitor.beginTask("compile " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
+
+                AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
+                try {
+                  Driver.run(DriverParameters.create(environment, baselang, sourceFile, monitor));
+                } catch (InterruptedException e) {
+                  throw e;
+                } catch (Exception e) {
+                  e.printStackTrace();
                   try {
-                    Result result = Driver.run(DriverParameters.create(environment, baselang, sourceFile, monitor));
-                    failed = failed || result == null || result.hasFailed();
-                  } catch (InterruptedException e) {
-                    throw e;
-                  } catch (Exception e) {
-                    e.printStackTrace();
-                    try {
-                      IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
-                      m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
-                    } catch (CoreException ce) {
-                    }
-                  } 
-  
-                  
-                  updateUI(sourceFile);
-                }
+                    IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
+                    m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
+                  } catch (CoreException ce) {
+                  }
+                } 
+
+                
+                updateUI(sourceFile);
               }
             }
-            
-            if (failed)
-              task.setState(TaskState.FAILURE);
-            else
-              task.setState(TaskState.SUCCESS);
           }
         } catch (InterruptedException e) {
           monitor.setCanceled(true);
