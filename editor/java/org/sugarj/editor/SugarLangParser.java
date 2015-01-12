@@ -110,7 +110,7 @@ public class SugarLangParser extends JSGLRI {
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
       return parseCompletionTree(input, filename, result);
-    if (res.isConsistent(editedSources.b, environment.getMode()))
+    if (res != null && res.isConsistent(editedSources.b, environment.getMode()))
       return result.getSugaredSyntaxTree();
     if (result.hasFailed()) {
       result = PARSE_FAILURE_RESULT;
