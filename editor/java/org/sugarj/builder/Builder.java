@@ -3,9 +3,12 @@ package org.sugarj.builder;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
@@ -34,6 +37,11 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
+import org.sugarj.common.cleardep.BuildSchedule;
+import org.sugarj.common.cleardep.BuildSchedule.Task;
+import org.sugarj.common.cleardep.BuildSchedule.TaskState;
+import org.sugarj.common.cleardep.BuildScheduleBuilder;
+import org.sugarj.common.cleardep.CompilationUnit;
 import org.sugarj.common.cleardep.mode.DoCompileMode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
@@ -151,6 +159,7 @@ public class Builder extends IncrementalProjectBuilder {
   }
 
   private void build(IProgressMonitor monitor, final List<BuildInput> inputs, String what) {
+    final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
     final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     environment.setGenerateFiles(true);
     environment.setForEditor(false);
@@ -171,58 +180,98 @@ public class Builder extends IncrementalProjectBuilder {
         ProcessingListener marker = new MarkingProcessingListener(getProject());
         Driver.addProcessingDoneListener(marker);
 //        getLock(getProject()).acquire();
-        for (BuildInput input : inputs)
+                
+        Set<CompilationUnit> allUnitsToCompile = new HashSet<>();
+        Map<RelativePath, IResource> resources = new HashMap<>();
+        for (BuildInput input : inputs) {
+          resources.put(input.sourceFile, input.resource);
+          RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
+          RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
           try {
-            if (Thread.currentThread().isInterrupted()) {
-              monitor.setCanceled(true);
-              monitor.done();
-              return Status.CANCEL_STATUS;
-            }
-              
-            monitor.beginTask("compile " + input.sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
-
-            RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
-            RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             Result res = Result.read(environment.getStamper(), depFile, editedFile, editedSourceFiles, mode);
-            
-            if (res == null || !res.isConsistent(editedSourceFiles, mode))
-              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
-            
-            IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
-            for (IWorkbenchWindow workbenchWindow : workbenchWindows)
-              for (IWorkbenchPage page : workbenchWindow.getPages())
-                for (IEditorReference editorRef : page.getEditorReferences()) {
-                  IEditorPart editor = editorRef.getEditor(false);
-                  if (editor != null && 
-                      editor instanceof UniversalEditor && 
-                      editor.getEditorInput() instanceof FileEditorInput &&
-                      ((UniversalEditor) editor).fParserScheduler != null &&
-                      !Thread.currentThread().isInterrupted()) {
-                    IFile file = ((FileEditorInput) editor.getEditorInput()).getFile();
-                    if (file.getLocation().toString().equals(input.sourceFile.toString()))
-                      ((UniversalEditor) editor).fParserScheduler.schedule();
-                  }
-                }
-          } catch (InterruptedException e) {
-            monitor.setCanceled(true);
-            monitor.done();
-            return Status.CANCEL_STATUS;
-          } catch (Exception e) {
-            e.printStackTrace();
-            try {
-              IMarker m = input.resource.createMarker(IMarker.PROBLEM);
-              m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
-            } catch (CoreException ce) {
-            }
-          } finally {
-//            getLock(getProject()).release();
-            Driver.removeProcessingDoneListener(marker);
-            monitor.done();
+            if (res == null)
+              res = Result.create(environment.getStamper(), depFile, environment.getCompileBin(), editedFile, environment.getParseBin(), Collections.singleton(input.sourceFile), editedSourceFiles, mode, null);
+            allUnitsToCompile.add(res);
+          } catch (IOException e) {
+            throw new RuntimeException(e);
           }
-          return Status.OK_STATUS;
+        }
+        
+        BuildScheduleBuilder scheduleBuilder = new BuildScheduleBuilder(allUnitsToCompile, BuildSchedule.ScheduleMode.REBUILD_INCONSISTENT);
+        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, mode).getOrderedSchedule();
+        
+        try {
+          for (Task task : schedule) {
+            if (!task.needsToBeBuild(editedSourceFiles, mode)) {
+              task.setState(TaskState.SUCCESS);
+              continue;
+            }
+            
+            task.setState(TaskState.IN_PROGESS);
+            boolean failed = false;
+            
+            Set<CompilationUnit> units = task.getUnitsToCompile();
+            for (CompilationUnit unit : units) {
+              for (RelativePath sourceFile : unit.getSourceArtifacts()) {
+                if (Thread.currentThread().isInterrupted()) throw new InterruptedException();  
+                monitor.beginTask("compile " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
+
+                AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
+                try {
+                  Result result = Driver.run(DriverParameters.create(environment, baselang, sourceFile, monitor));
+                  failed = failed || result == null || result.hasFailed();
+                } catch (InterruptedException e) {
+                  throw e;
+                } catch (Exception e) {
+                  e.printStackTrace();
+                  try {
+                    IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
+                    m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
+                  } catch (CoreException ce) {
+                  }
+                } 
+
+                
+                updateUI(sourceFile);
+              }
+            }
+            
+            if (failed)
+              task.setState(TaskState.FAILURE);
+            else
+              task.setState(TaskState.SUCCESS);
+          }
+        } catch (InterruptedException e) {
+          monitor.setCanceled(true);
+          monitor.done();
+          return Status.CANCEL_STATUS;
+        } finally {
+//            getLock(getProject()).release();
+          Driver.removeProcessingDoneListener(marker);
+          monitor.done();
+        }
+        return Status.OK_STATUS;
       }
     };
     buildJob.setRule(getProject());
     buildJob.schedule();
+  }
+  
+  protected static void updateUI(RelativePath sourceFile) {
+    IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
+    for (IWorkbenchWindow workbenchWindow : workbenchWindows)
+      for (IWorkbenchPage page : workbenchWindow.getPages())
+        for (IEditorReference editorRef : page.getEditorReferences()) {
+          IEditorPart editor = editorRef.getEditor(false);
+          if (editor != null && 
+              editor instanceof UniversalEditor && 
+              editor.getEditorInput() instanceof FileEditorInput &&
+              ((UniversalEditor) editor).fParserScheduler != null &&
+              !Thread.currentThread().isInterrupted()) {
+            IFile file = ((FileEditorInput) editor.getEditorInput()).getFile();
+            if (file.getLocation().toString().equals(sourceFile.toString()))
+              ((UniversalEditor) editor).fParserScheduler.schedule();
+          }
+        }
   }
 }
