@@ -183,10 +183,10 @@ public class Builder extends IncrementalProjectBuilder {
 
             RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
             RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(input.sourceFile.getRelativePath()) + ".dep");
-            Pair<Result, Boolean> res = Result.read(environment.getStamper(), depFile, editedFile, editedSourceFiles, mode);
+            Result res = Result.read(environment.getStamper(), depFile, editedFile, editedSourceFiles, mode);
             
-            if (res.a == null || !res.b)
-              res.a = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
+            if (res == null || !res.isConsistent(editedSourceFiles, mode))
+              res = Driver.run(DriverParameters.create(environment, input.baseLang, input.sourceFile, monitor));
             
             IWorkbenchWindow[] workbenchWindows = PlatformUI.getWorkbench().getWorkbenchWindows();
             for (IWorkbenchWindow workbenchWindow : workbenchWindows)

@@ -102,15 +102,15 @@ public class SugarLangParser extends JSGLRI {
     this.sourceFile = sourceFile;
     Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> editedSources = computeEditedSources(input, sourceFile);
     
-    Pair<Result, Boolean> res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode(), editedSources.b);
+    Result res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode(), editedSources.b);
 //    if (result.getSugaredSyntaxTree() != null)
 //      oldResult = result;
-    if (res.a != null)
-      result = res.a;
+    if (res != null)
+      result = res;
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
       return parseCompletionTree(input, filename, result);
-    if (res.b)
+    if (res.isConsistent(editedSources.b, environment.getMode()))
       return result.getSugaredSyntaxTree();
     if (result.hasFailed()) {
       result = PARSE_FAILURE_RESULT;
