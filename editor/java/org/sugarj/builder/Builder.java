@@ -187,37 +187,36 @@ public class Builder extends IncrementalProjectBuilder {
         
         try {
           for (Task task : schedule) {
-            if (!task.needsToBeBuild(editedSourceFiles, mode)) {
-              task.setState(TaskState.SUCCESS);
-              continue;
-            }
+            boolean needsBuilding = task.needsToBeBuild(editedSourceFiles, mode);
             
             task.setState(TaskState.IN_PROGESS);
             boolean failed = false;
             
             Set<CompilationUnit> units = task.getUnitsToCompile();
             for (CompilationUnit unit : units) {
-              for (RelativePath sourceFile : unit.getSourceArtifacts()) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedException();  
-                monitor.beginTask("compile " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
-
-                AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
-                try {
-                  Result result = Driver.run(DriverParameters.create(environment, baselang, sourceFile, monitor));
-                  failed = failed || result == null || result.hasFailed();
-                } catch (InterruptedException e) {
-                  throw e;
-                } catch (Exception e) {
-                  e.printStackTrace();
+              if (needsBuilding || !unit.isPersisted()) {
+                for (RelativePath sourceFile : unit.getSourceArtifacts()) {
+                  if (Thread.currentThread().isInterrupted()) throw new InterruptedException();  
+                  monitor.beginTask("compile " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
+  
+                  AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
                   try {
-                    IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
-                    m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
-                  } catch (CoreException ce) {
-                  }
-                } 
-
-                
-                updateUI(sourceFile);
+                    Result result = Driver.run(DriverParameters.create(environment, baselang, sourceFile, monitor));
+                    failed = failed || result == null || result.hasFailed();
+                  } catch (InterruptedException e) {
+                    throw e;
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                    try {
+                      IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
+                      m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
+                    } catch (CoreException ce) {
+                    }
+                  } 
+  
+                  
+                  updateUI(sourceFile);
+                }
               }
             }
             
