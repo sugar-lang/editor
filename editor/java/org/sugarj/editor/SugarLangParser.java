@@ -1,6 +1,7 @@
 package org.sugarj.editor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -77,6 +78,9 @@ public class SugarLangParser extends JSGLRI {
   
   private RelativePath sourceFile;
   private Result result = PARSE_FAILURE_RESULT;
+  private AbstractBaseLanguage baseLang;
+
+
   
   public SugarLangParser(JSGLRI parser) {
     super(parser.getParseTable(), parser.getStartSymbol(), parser.getController());
@@ -89,6 +93,8 @@ public class SugarLangParser extends JSGLRI {
       environment.setForEditor(true);
     }
     assert environment != null;
+    
+    baseLang = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(filename));
     
     if (!BaseLanguageRegistry.getInstance().isRegistered(FileCommands.getExtension(filename))) {
       result = PARSE_FAILURE_RESULT;
@@ -145,8 +151,6 @@ public class SugarLangParser extends JSGLRI {
       return;
     }
     
-    final AbstractBaseLanguage baseLang = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(sourceFile));
-
     SugarLangParser.setPending(sourceFile, true);
     
     Job parseJob = new Job("SugarJ parser: " + sourceFile.getRelativePath()) {
@@ -213,8 +217,13 @@ public class SugarLangParser extends JSGLRI {
 
 
   public List<IStrategoTerm> getEditorServices() {
-    if (result != null)
-      return result.getEditorServices();
+    if (result != null) {
+      List<IStrategoTerm> services = new ArrayList<>(result.getEditorServices());
+      services.addAll(StdLib.stdEditirServices);
+      if (baseLang != null)
+        services.addAll(baseLang.getInitEditorServices());
+      return services;
+    }
     throw new IllegalStateException("Result should not be null.");
   }
   
