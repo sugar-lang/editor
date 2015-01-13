@@ -3,18 +3,28 @@
     
     <!-- Key input modules -->
     <property name="sdfmodule" value="sugar-lang"/>
-    <property name="metasdfmodule" value="Stratego-sugar-lang"/>
-    <property name="esvmodule" value="sugar-lang"/>
-    <property name="strmodule" value="sugar_lang"/>
+	  <property name="metasdfmodule" value="Stratego-sugar-lang"/>
+	  <property name="esvmodule" value="sugar-lang"/>
+	  <property name="strmodule" value="sugar_lang"/>
+	  <property name="ppmodule" value="sugar-lang-pp"/>
+	  <property name="sigmodule" value="sugar-lang-sig"/>
 
     <!-- Project directories -->
     <property name="trans" location="trans"/>
     <property name="src-gen" location="editor/java"/>
-    <property name="syntax" location="syntax"/>
+    <property name="src-dirs" location="icons"/>
     <property name="include" location="include"/>
     <property name="lib" location="lib"/>
-    <property name="build" location="bin"/>
-    <property name="dist" location="bin/dist"/>
+    <property name="build" location="target/classes"/>
+    <property name="sdf-src-gen" location="src-gen"/>
+    <property name="pp" location="${sdf-src-gen}/pp"/>
+    <property name="signatures" location="${sdf-src-gen}/signatures"/>
+    <property name="lib-gen" location="${include}"/>
+    <property name="syntax" location="${sdf-src-gen}/syntax"/>
+    <property name="syntax.rel" location="${syntax}" relative="yes"/>
+    <property name="trans.rel" location="trans" relative="yes"/>
+    <property name="include.rel" location="${include}" relative="yes"/>
+    <property name="lib-gen.rel" location="${lib-gen}" relative="yes"/>
     
     <!-- Imports -->
     <property name="build.sdf.imports" value=""/>
@@ -30,15 +40,15 @@
     <property name="externaljarflags" value="-la org.lib"/>
     -->
 
-    <!-- Environment configuration for command-line builds -->
+  <!-- Environment configuration for command-line builds -->
     <condition property="build.strategoxt.sdf" value="${eclipse.spoofaximp.nativeprefix}" else="">
-        <isset property="eclipse.spoofaximp.nativeprefix"/>
+      <isset property="eclipse.spoofaximp.nativeprefix"/>
     </condition>
-	<echo message="SDF Path:${build.strategoxt.sdf}"/>
-    <property name="build.strategoxt.stratego" location="${user.home}/.nix-profile/bin"/>
-		
-    <!-- used for building inside of Eclipse -->
-    <import file="build.generated.xml"/>   
+    <property name="nativepath" value="${build.strategoxt.sdf}/"/>
+    <property location="${user.home}/.nix-profile/bin" name="build.strategoxt.sdf"/>
+	    
+	<!-- used for building inside of Eclipse -->
+	<import file="build.generated.xml"/>   
 
     <!-- Main target -->
     <target name="all" depends="spoofaximp.default.ctree"/>

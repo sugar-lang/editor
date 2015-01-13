@@ -1,14 +1,11 @@
 module sugar-lang
 
 context-free start-symbols
-  
   Start
 
-templates
-  
+context-free syntax  
   Start.Dummy = <>
   End.Dummy = <>
-  
-priorities
-  Start.Dummy > End.Dummy
 
+context-free priorities
+  Start.Dummy > End.Dummy
