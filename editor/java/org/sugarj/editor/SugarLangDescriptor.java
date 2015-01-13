@@ -7,7 +7,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.imp.language.ILanguageService;
 import org.spoofax.interpreter.terms.IStrategoAppl;
@@ -17,6 +20,7 @@ import org.spoofax.interpreter.terms.IStrategoTerm;
 import org.spoofax.interpreter.terms.ITermFactory;
 import org.spoofax.terms.StrategoListIterator;
 import org.strategoxt.imp.runtime.Environment;
+import org.strategoxt.imp.runtime.dynamicloading.AbstractService;
 import org.strategoxt.imp.runtime.dynamicloading.BadDescriptorException;
 import org.strategoxt.imp.runtime.dynamicloading.Descriptor;
 import org.strategoxt.imp.runtime.dynamicloading.DynamicParseController;
@@ -41,6 +45,22 @@ public class SugarLangDescriptor extends Descriptor {
     super(baseDescriptor.getDocument());
     baseDocument = baseDescriptor.getDocument();
     setDynamicallyLoaded(true);
+  }
+  
+  private Map<SGLRParseController, List<ILanguageService>> serviceRegistry = new HashMap<>();
+  private synchronized void addService(SGLRParseController controller, ILanguageService service) {
+    List<ILanguageService> services = serviceRegistry.get(controller);
+    if (services == null)
+      services = new ArrayList<>();
+    services.add(service);
+    serviceRegistry.put(controller, services);
+  }
+  private synchronized List<ILanguageService> getServices(SGLRParseController controller) {
+    List<ILanguageService> services = serviceRegistry.get(controller);
+    if (services != null)
+      return services;
+    else
+      return Collections.emptyList();
   }
   
   @Override
@@ -69,6 +89,8 @@ public class SugarLangDescriptor extends Descriptor {
     }
     
     T result = super.createService(type, controller);
+    if (!(result instanceof AbstractService<?>))
+      addService(controller, result);
     
 //    if (result instanceof IOnSaveService)
 //      result = (T) new SugarJOnSaveService(this, (IOnSaveService) result);
@@ -81,10 +103,15 @@ public class SugarLangDescriptor extends Descriptor {
 
   private void reloadEditors(SGLRParseController controller) {
     simpleClearCache(controller);
-    for (IDynamicLanguageService service : getActiveServices(controller)) {
+    List<ILanguageService> services = new ArrayList<>();
+    for (ILanguageService service : getActiveServices(controller))
+      services.add(service);
+    services.addAll(getServices(controller));
+    
+    for (ILanguageService service : services) {
       try {
-        if (!(service instanceof DynamicParseController))
-          service.reinitialize(this);
+        if (service instanceof IDynamicLanguageService && !(service instanceof DynamicParseController))
+          ((IDynamicLanguageService) service).reinitialize(this);
       } catch (BadDescriptorException e) {
         Environment.logWarning("Unable to reinitialize service", e);
       }
