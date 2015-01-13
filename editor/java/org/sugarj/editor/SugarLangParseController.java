@@ -36,8 +36,10 @@ public class SugarLangParseController extends SugarLangParseControllerGenerated 
       if (result instanceof SGLRParseController) {
         JSGLRI parser = ((SGLRParseController) result).getParser();
         if (!(parser instanceof SugarLangParser)) {
-          sugarjParser = new SugarLangParser(parser);
-          sugarjParser.setEnvironment(environment);        
+          if (sugarjParser == null) {
+            sugarjParser = new SugarLangParser(parser);
+            sugarjParser.setEnvironment(environment);
+          }
           ((SGLRParseController) result).setParser(sugarjParser);
         }
       }

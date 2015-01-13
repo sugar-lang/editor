@@ -23,7 +23,7 @@ done
 echo "Native Jar File"
 echo $NATIVE_JAR
 
-mkdir native
+mkdir -p native
 (cd native && jar xf $NATIVE_JAR)
 
 NEW_CP="$NEW_CP:$BASEDIR/native/"

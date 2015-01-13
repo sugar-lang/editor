@@ -95,8 +95,8 @@ public class SugarLangDescriptor extends Descriptor {
 //    if (result instanceof IOnSaveService)
 //      result = (T) new SugarJOnSaveService(this, (IOnSaveService) result);
     
-    if (servicesChanged && result instanceof StrategoObserver)
-      ((StrategoObserver) result).reinitialize(this);
+//    if (servicesChanged && result instanceof StrategoObserver)
+//      ((StrategoObserver) result).reinitialize(this);
     
     return result;
   }
