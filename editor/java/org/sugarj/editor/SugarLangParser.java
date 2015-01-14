@@ -77,7 +77,21 @@ public class SugarLangParser extends JSGLRI {
   }
   
   private RelativePath sourceFile;
-  private Result result = PARSE_FAILURE_RESULT;
+  
+  private Result getResult(RelativePath sourceFile) {
+    Result result;
+    try {
+      result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode());
+      if (result != null)
+        return result;
+      else
+        return PARSE_FAILURE_RESULT;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return PARSE_FAILURE_RESULT;
+    }
+  }
+  
   private AbstractBaseLanguage baseLang;
 
 
@@ -97,7 +111,6 @@ public class SugarLangParser extends JSGLRI {
     baseLang = BaseLanguageRegistry.getInstance().getBaseLanguage(FileCommands.getExtension(filename));
     
     if (!BaseLanguageRegistry.getInstance().isRegistered(FileCommands.getExtension(filename))) {
-      result = PARSE_FAILURE_RESULT;
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     }
     
@@ -108,29 +121,24 @@ public class SugarLangParser extends JSGLRI {
     this.sourceFile = sourceFile;
     Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> editedSources = computeEditedSources(input, sourceFile);
     
-    Result res = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode(), editedSources.b);
-//    if (result.getSugaredSyntaxTree() != null)
-//      oldResult = result;
-    if (res != null)
-      result = res;
+    Result res = getResult(sourceFile);
     
-    if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && result != null && result.getParseTable() != null)
-      return parseCompletionTree(input, filename, result);
-    if (res != null && res.isConsistent(editedSources.b, environment.getMode()))
-      return result.getSugaredSyntaxTree();
-    if (result.hasFailed()) {
-      result = PARSE_FAILURE_RESULT;
+    if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && res.getParseTable() != null)
+      return parseCompletionTree(input, filename, res);
+    if (res.isConsistent(editedSources.b, environment.getMode()))
+      return res.getSugaredSyntaxTree();
+    if (res.hasFailed()) {
+      res = PARSE_FAILURE_RESULT;
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     }
     
     if (!isPending(sourceFile)) 
       scheduleParse(sourceFile, editedSources.a, editedSources.b);
     
-    if (result.getSugaredSyntaxTree() == null) {
-      result = PARSE_FAILURE_RESULT;
+    if (res.getSugaredSyntaxTree() == null)
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
-    }
-    return result.getSugaredSyntaxTree();
+    else
+      return res.getSugaredSyntaxTree();
   }
 
   private Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
@@ -206,7 +214,8 @@ public class SugarLangParser extends JSGLRI {
   
   @Override
   public Set<org.spoofax.jsglr.shared.BadTokenException> getCollectedErrors() {
-    if (result.getParseErrors().isEmpty())
+    Result result = getResult(sourceFile);
+    if (result == null || result.getParseErrors().isEmpty())
       return Collections.emptySet();
     
     Set<org.spoofax.jsglr.shared.BadTokenException> res = new HashSet<org.spoofax.jsglr.shared.BadTokenException>();
@@ -217,6 +226,7 @@ public class SugarLangParser extends JSGLRI {
 
 
   public List<IStrategoTerm> getEditorServices() {
+    Result result = getResult(sourceFile);
     if (result != null) {
       List<IStrategoTerm> services = new ArrayList<>(result.getEditorServices());
       services.addAll(StdLib.stdEditirServices);
