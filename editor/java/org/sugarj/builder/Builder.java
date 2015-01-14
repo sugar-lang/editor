@@ -173,8 +173,11 @@ public class Builder extends IncrementalProjectBuilder {
           RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           try {
             Result res = Result.read(environment.getStamper(), CompilerMode.instance, depFile, editedFile);
-            if (res == null)
-              res = Result.create(environment.getStamper(), CompilerMode.instance, null, editedSourceFiles, depFile);
+            if (res == null) {
+              Map<RelativePath, Integer> sourceFiles = new HashMap<>(editedSourceFiles);
+              sourceFiles.put(sourceFile, environment.getStamper().stampOf(sourceFile));
+              res = Result.create(environment.getStamper(), CompilerMode.instance, null, sourceFiles, depFile);
+            }
             allUnitsToCompile.add(res);
           } catch (IOException e) {
             throw new RuntimeException(e);
