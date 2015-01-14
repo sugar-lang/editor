@@ -12,6 +12,7 @@ import org.sugarj.common.cleardep.Stamper;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
+import org.sugarj.driver.Result.EditorMode;
 import org.sugarj.stdlib.StdLib;
 
 /**
@@ -35,13 +36,15 @@ public class SugarLangProjectEnvironment {
     }
     
     private static Environment makeProjectEnvironment(IJavaProject project) throws JavaModelException {
-      Environment env = new Environment(false, StdLib.stdLibDir, Stamper.DEFAULT);
+      Environment env = new Environment(StdLib.stdLibDir, Stamper.DEFAULT);
       
       IPath fullPath = project.getProject().getFullPath();
       Path root = new AbsolutePath(project.getProject().getLocation().makeAbsolute().toString());
       Path bin = new RelativePath(root, project.getOutputLocation().makeRelativeTo(fullPath).toString());
       env.setRoot(root);
-      env.setBin(bin);
+      env.setCompileBin(bin);
+      env.setMode(EditorMode.instance);
+      env.setBin(env.getParseBin());
       
       for (IPackageFragmentRoot fragment : project.getAllPackageFragmentRoots()) {
         IPath path = fragment.getPath();

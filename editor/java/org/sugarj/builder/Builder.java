@@ -40,7 +40,6 @@ import org.sugarj.common.cleardep.BuildSchedule;
 import org.sugarj.common.cleardep.BuildSchedule.Task;
 import org.sugarj.common.cleardep.BuildScheduleBuilder;
 import org.sugarj.common.cleardep.CompilationUnit;
-import org.sugarj.common.cleardep.mode.DoCompileMode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -48,6 +47,7 @@ import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
+import org.sugarj.driver.Result.CompilerMode;
 import org.sugarj.editor.SugarLangConsole;
 import org.sugarj.editor.SugarLangProjectEnvironment;
 import org.sugarj.util.ProcessingListener;
@@ -147,10 +147,10 @@ public class Builder extends IncrementalProjectBuilder {
   private void build(IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
     final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
-    environment.setGenerateFiles(true);
-    environment.setForEditor(false);
+    environment.setMode(CompilerMode.instance);
+    environment.setBin(environment.getCompileBin());
+    
     final Map<RelativePath, Integer> editedSourceFiles = Collections.emptyMap();
-    final DoCompileMode mode = new DoCompileMode(null, true);
     
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
@@ -172,9 +172,9 @@ public class Builder extends IncrementalProjectBuilder {
           RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           try {
-            Result res = Result.read(environment.getStamper(), depFile, editedFile, mode);
+            Result res = Result.read(environment.getStamper(), CompilerMode.instance, depFile, editedFile);
             if (res == null)
-              res = Result.create(environment.getStamper(), depFile, environment.getCompileBin(), editedFile, environment.getParseBin(), Collections.singleton(sourceFile), editedSourceFiles, mode, null);
+              res = Result.create(environment.getStamper(), CompilerMode.instance, null, editedSourceFiles, depFile);
             allUnitsToCompile.add(res);
           } catch (IOException e) {
             throw new RuntimeException(e);
@@ -182,11 +182,11 @@ public class Builder extends IncrementalProjectBuilder {
         }
         
         BuildScheduleBuilder scheduleBuilder = new BuildScheduleBuilder(allUnitsToCompile, BuildSchedule.ScheduleMode.REBUILD_INCONSISTENT);
-        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, mode).getOrderedSchedule();
+        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, CompilerMode.instance).getOrderedSchedule();
         
         try {
           for (Task task : schedule) {
-            if(!task.needsToBeBuild(editedSourceFiles, mode))
+            if(!task.needsToBeBuild(editedSourceFiles, CompilerMode.instance))
               continue;
             
             Set<CompilationUnit> units = task.getUnitsToCompile();
