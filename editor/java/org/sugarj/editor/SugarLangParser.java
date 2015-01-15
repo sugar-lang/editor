@@ -37,7 +37,6 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
-import org.sugarj.common.cleardep.Mode;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
@@ -103,8 +102,7 @@ public class SugarLangParser extends JSGLRI {
   @Override
   protected IStrategoTerm doParse(String input, String filename) throws IOException {
     if (environment == null && getController().getProject() != null) {
-      environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject());
-      environment.setForEditor(true);
+      environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject(), true);
     }
     assert environment != null;
     
@@ -145,7 +143,7 @@ public class SugarLangParser extends JSGLRI {
     if (FileCommands.exists(sourceFile) && input.equals(FileCommands.readFileAsString(sourceFile)))
       return Pair.create(Collections.<RelativePath, String>emptyMap(), Collections.<RelativePath, Integer>emptyMap());
 
-    RelativePath editedSourceFile = new RelativePath(environment.getParseBin(), sourceFile.getRelativePath());
+    RelativePath editedSourceFile = new RelativePath(environment.getBin(), sourceFile.getRelativePath());
     if (!FileCommands.exists(editedSourceFile) || !input.equals(FileCommands.readFileAsString(editedSourceFile)))
       FileCommands.writeToFile(editedSourceFile, input);
     int stamp = environment.getStamper().stampOf(editedSourceFile);
@@ -209,7 +207,7 @@ public class SugarLangParser extends JSGLRI {
   public void setEnvironment(Environment environment) {
     this.environment = environment;
     if (this.environment != null)
-      this.environment.setForEditor(true);
+      assert environment.getMode().isTemporary();
   }
   
   @Override

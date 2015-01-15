@@ -40,6 +40,7 @@ import org.sugarj.common.cleardep.BuildSchedule;
 import org.sugarj.common.cleardep.BuildSchedule.Task;
 import org.sugarj.common.cleardep.BuildScheduleBuilder;
 import org.sugarj.common.cleardep.CompilationUnit;
+import org.sugarj.common.cleardep.Mode;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -47,7 +48,6 @@ import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
-import org.sugarj.driver.Result.CompilerMode;
 import org.sugarj.editor.SugarLangConsole;
 import org.sugarj.editor.SugarLangProjectEnvironment;
 import org.sugarj.util.ProcessingListener;
@@ -87,10 +87,9 @@ public class Builder extends IncrementalProjectBuilder {
   
   protected void clean(IProgressMonitor monitor) throws CoreException {
     File f = getProject().getLocation().append(JavaCore.create(getProject()).getOutputLocation().makeRelativeTo(getProject().getFullPath())).toFile();
-    Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
+    Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject(), false);
     try {
       FileCommands.delete(new AbsolutePath(f.getPath()));
-      FileCommands.delete(environment.getParseBin());
       FileCommands.delete(environment.getCacheDir());
     } catch (IOException e) {
     }
@@ -107,17 +106,18 @@ public class Builder extends IncrementalProjectBuilder {
   private void fullBuild(IProgressMonitor monitor) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
     final Map<RelativePath, IResource> resources = new HashMap<>();
-
+    
+    final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject(), false);
+    
     try {
       getProject().accept(new IResourceVisitor() {
-        Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
         
         @Override
         public boolean visit(IResource resource) throws CoreException {
           Path root = new AbsolutePath(getProject().getLocation().makeAbsolute().toString());
           IPath relPath = resource.getFullPath().makeRelativeTo(getProject().getFullPath());
           if (!relPath.isEmpty() &&
-              (environment.getParseBin().equals(new RelativePath(root, relPath.toString())) ||
+              (environment.getBin().equals(new RelativePath(root, relPath.toString())) ||
                environment.getIncludePath().contains(new RelativePath(root, relPath.toString()))))
             return false;
           
@@ -141,16 +141,14 @@ public class Builder extends IncrementalProjectBuilder {
       e.printStackTrace();
     }
 
-    build(monitor, resources, "project " + getProject().getName());
+    build(environment, monitor, resources, "project " + getProject().getName());
   }
 
-  private void build(IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
+  private void build(final Environment environment, IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
-    final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
-    environment.setMode(CompilerMode.instance);
-    environment.setBin(environment.getCompileBin());
-    
     final Map<RelativePath, Integer> editedSourceFiles = Collections.emptyMap();
+    
+    final Mode<Result> mode = environment.<Result>getMode();
     
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
@@ -169,14 +167,13 @@ public class Builder extends IncrementalProjectBuilder {
                 
         Set<CompilationUnit> allUnitsToCompile = new HashSet<>();
         for (RelativePath sourceFile : resources.keySet()) {
-          RelativePath depFile = new RelativePath(environment.getCompileBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
-          RelativePath editedFile = new RelativePath(environment.getParseBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
+          RelativePath dep = new RelativePath(environment.getBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           try {
-            Result res = Result.read(environment.getStamper(), CompilerMode.instance, depFile, editedFile);
+            Result res = Result.read(environment.getStamper(), mode, dep);
             if (res == null) {
               Map<RelativePath, Integer> sourceFiles = new HashMap<>(editedSourceFiles);
               sourceFiles.put(sourceFile, environment.getStamper().stampOf(sourceFile));
-              res = Result.create(environment.getStamper(), CompilerMode.instance, null, sourceFiles, depFile);
+              res = Result.create(environment.getStamper(), mode, null, sourceFiles, dep);
             }
             allUnitsToCompile.add(res);
           } catch (IOException e) {
@@ -185,11 +182,11 @@ public class Builder extends IncrementalProjectBuilder {
         }
         
         BuildScheduleBuilder scheduleBuilder = new BuildScheduleBuilder(allUnitsToCompile, BuildSchedule.ScheduleMode.REBUILD_INCONSISTENT);
-        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, CompilerMode.instance).getOrderedSchedule();
+        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, mode).getOrderedSchedule();
         
         try {
           for (Task task : schedule) {
-            if(!task.needsToBeBuild(editedSourceFiles, CompilerMode.instance))
+            if(!task.needsToBeBuild(editedSourceFiles, mode))
               continue;
             
             Set<CompilationUnit> units = task.getUnitsToCompile();
