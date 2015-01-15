@@ -182,11 +182,11 @@ public class Builder extends IncrementalProjectBuilder {
         }
         
         BuildScheduleBuilder scheduleBuilder = new BuildScheduleBuilder(allUnitsToCompile, BuildSchedule.ScheduleMode.REBUILD_INCONSISTENT);
-        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles, mode).getOrderedSchedule();
+        List<Task> schedule = scheduleBuilder.createBuildSchedule(editedSourceFiles).getOrderedSchedule();
         
         try {
           for (Task task : schedule) {
-            if(!task.needsToBeBuild(editedSourceFiles, mode))
+            if(!task.needsToBeBuild(editedSourceFiles))
               continue;
             
             Set<CompilationUnit> units = task.getUnitsToCompile();

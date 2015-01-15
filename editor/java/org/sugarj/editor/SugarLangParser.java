@@ -80,7 +80,7 @@ public class SugarLangParser extends JSGLRI {
   private Result getResult(RelativePath sourceFile) {
     Result result;
     try {
-      result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.getMode());
+      result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.<Result>getMode());
       if (result != null)
         return result;
       else
