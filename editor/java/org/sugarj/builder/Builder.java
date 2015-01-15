@@ -89,9 +89,12 @@ public class Builder extends IncrementalProjectBuilder {
     File f = getProject().getLocation().append(JavaCore.create(getProject()).getOutputLocation().makeRelativeTo(getProject().getFullPath())).toFile();
     Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject(), false);
     try {
-      FileCommands.delete(new AbsolutePath(f.getPath()));
-      FileCommands.delete(environment.getCacheDir());
+      if (f.exists())
+        FileCommands.delete(new AbsolutePath(f.getPath()));
+      if (FileCommands.exists(environment.getCacheDir()))
+          FileCommands.delete(environment.getCacheDir());
     } catch (IOException e) {
+      e.printStackTrace();
     }
     
   }

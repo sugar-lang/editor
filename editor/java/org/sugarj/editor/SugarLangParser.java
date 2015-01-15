@@ -76,23 +76,28 @@ public class SugarLangParser extends JSGLRI {
   }
   
   private RelativePath sourceFile;
+  private AbstractBaseLanguage baseLang;
   
-  private Result getResult(RelativePath sourceFile) {
-    Result result;
+  private Result cachedResult = null;
+  private synchronized void clearCachedResult() {
+    cachedResult = null;
+  }
+  private synchronized Result getResult(RelativePath sourceFile) {
+    if (cachedResult != null)
+      return cachedResult;
+    
     try {
-      result = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.<Result>getMode());
-      if (result != null)
-        return result;
-      else
-        return PARSE_FAILURE_RESULT;
+      cachedResult = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.<Result>getMode());
+      if (cachedResult == null)
+        cachedResult = PARSE_FAILURE_RESULT;
+      return cachedResult;
     } catch (IOException e) {
       e.printStackTrace();
-      return PARSE_FAILURE_RESULT;
+      if (cachedResult == null)
+        cachedResult = PARSE_FAILURE_RESULT;
+      return cachedResult;
     }
   }
-  
-  private AbstractBaseLanguage baseLang;
-
 
   
   public SugarLangParser(JSGLRI parser) {
@@ -172,6 +177,7 @@ public class SugarLangParser extends JSGLRI {
           org.strategoxt.imp.runtime.Environment.logException(e);
         } finally {
           monitor.done();
+          clearCachedResult();
           SugarLangParser.setPending(sourceFile, false);
           if (ok)
             getController().scheduleParserUpdate(0, false);
