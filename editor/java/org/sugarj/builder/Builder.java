@@ -41,6 +41,7 @@ import org.sugarj.common.cleardep.BuildSchedule.Task;
 import org.sugarj.common.cleardep.BuildScheduleBuilder;
 import org.sugarj.common.cleardep.CompilationUnit;
 import org.sugarj.common.cleardep.Mode;
+import org.sugarj.common.cleardep.Stamp;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -149,7 +150,7 @@ public class Builder extends IncrementalProjectBuilder {
 
   private void build(final Environment environment, IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
-    final Map<RelativePath, Integer> editedSourceFiles = Collections.emptyMap();
+    final Map<RelativePath, Stamp> editedSourceFiles = Collections.emptyMap();
     
     final Mode<Result> mode = environment.<Result>getMode();
     
@@ -174,7 +175,7 @@ public class Builder extends IncrementalProjectBuilder {
           try {
             Result res = Result.read(environment.getStamper(), mode, dep);
             if (res == null) {
-              Map<RelativePath, Integer> sourceFiles = new HashMap<>(editedSourceFiles);
+              Map<RelativePath, Stamp> sourceFiles = new HashMap<>(editedSourceFiles);
               sourceFiles.put(sourceFile, environment.getStamper().stampOf(sourceFile));
               res = Result.create(environment.getStamper(), mode, null, sourceFiles, dep);
             }

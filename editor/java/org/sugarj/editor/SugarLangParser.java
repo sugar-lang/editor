@@ -37,6 +37,7 @@ import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
+import org.sugarj.common.cleardep.Stamp;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
@@ -122,7 +123,7 @@ public class SugarLangParser extends JSGLRI {
       throw new IllegalArgumentException("Cannot find source file for path " + filename);
     
     this.sourceFile = sourceFile;
-    Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> editedSources = computeEditedSources(input, sourceFile);
+    Pair<Map<RelativePath, String>, Map<RelativePath, Stamp>> editedSources = computeEditedSources(input, sourceFile);
     
     Result res = getResult(sourceFile);
     
@@ -144,19 +145,19 @@ public class SugarLangParser extends JSGLRI {
       return res.getSugaredSyntaxTree();
   }
 
-  private Pair<Map<RelativePath, String>, Map<RelativePath, Integer>> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
+  private Pair<Map<RelativePath, String>, Map<RelativePath, Stamp>> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
     if (FileCommands.exists(sourceFile) && input.equals(FileCommands.readFileAsString(sourceFile)))
-      return Pair.create(Collections.<RelativePath, String>emptyMap(), Collections.<RelativePath, Integer>emptyMap());
+      return Pair.create(Collections.<RelativePath, String>emptyMap(), Collections.<RelativePath, Stamp>emptyMap());
 
     RelativePath editedSourceFile = new RelativePath(environment.getBin(), sourceFile.getRelativePath());
     if (!FileCommands.exists(editedSourceFile) || !input.equals(FileCommands.readFileAsString(editedSourceFile)))
       FileCommands.writeToFile(editedSourceFile, input);
-    int stamp = environment.getStamper().stampOf(editedSourceFile);
+    Stamp stamp = environment.getStamper().stampOf(editedSourceFile);
 
   	return Pair.create(Collections.singletonMap(sourceFile, input), Collections.singletonMap(sourceFile, stamp));
   }
   
-  private synchronized void scheduleParse(final RelativePath sourceFile, final Map<RelativePath, String> editedSources, final Map<RelativePath, Integer> editedSourceStamps) {
+  private synchronized void scheduleParse(final RelativePath sourceFile, final Map<RelativePath, String> editedSources, final Map<RelativePath, Stamp> editedSourceStamps) {
     if (environment == null) {
       getController().scheduleParserUpdate(200, false);
       return;
@@ -190,7 +191,7 @@ public class SugarLangParser extends JSGLRI {
     parseJob.schedule();
   }
   
-  private Result runParser(RelativePath sourceFile, Map<RelativePath, String> editedSources, Map<RelativePath, Integer> editedSourceStamps, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
+  private Result runParser(RelativePath sourceFile, Map<RelativePath, String> editedSources, Map<RelativePath, Stamp> editedSourceStamps, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
@@ -288,7 +289,7 @@ public class SugarLangParser extends JSGLRI {
     class FailureResult extends Result {
       private static final long serialVersionUID = 1015028752880035858L;
       public FailureResult() { init(); }
-      @Override public boolean isConsistentShallow(Map<RelativePath, Integer> editedSourceFiles) { return false; };
+      @Override public boolean isConsistentShallow(Map<RelativePath, Stamp> editedSourceFiles) { return false; };
     }
     Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);
