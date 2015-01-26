@@ -175,9 +175,8 @@ public class Builder extends IncrementalProjectBuilder {
           try {
             Result res = Result.read(environment.getStamper(), mode, dep);
             if (res == null) {
-              Map<RelativePath, Stamp> sourceFiles = new HashMap<>(editedSourceFiles);
-              sourceFiles.put(sourceFile, environment.getStamper().stampOf(sourceFile));
-              res = Result.create(environment.getStamper(), mode, null, sourceFiles, dep);
+              res = Result.create(environment.getStamper(), mode, null, dep);
+              res.addSourceArtifact(sourceFile);
             }
             allUnitsToCompile.add(res);
           } catch (IOException e) {
