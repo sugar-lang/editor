@@ -32,16 +32,16 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.FileEditorInput;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
+import org.sugarj.cleardep.BuildSchedule;
+import org.sugarj.cleardep.BuildScheduleBuilder;
+import org.sugarj.cleardep.CompilationUnit;
+import org.sugarj.cleardep.Mode;
+import org.sugarj.cleardep.BuildSchedule.Task;
+import org.sugarj.cleardep.stamp.Stamp;
 import org.sugarj.common.CommandExecution;
 import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
-import org.sugarj.common.cleardep.BuildSchedule;
-import org.sugarj.common.cleardep.BuildSchedule.Task;
-import org.sugarj.common.cleardep.BuildScheduleBuilder;
-import org.sugarj.common.cleardep.CompilationUnit;
-import org.sugarj.common.cleardep.Mode;
-import org.sugarj.common.cleardep.Stamp;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -175,9 +175,8 @@ public class Builder extends IncrementalProjectBuilder {
           try {
             Result res = Result.read(environment.getStamper(), mode, dep);
             if (res == null) {
-              Map<RelativePath, Stamp> sourceFiles = new HashMap<>(editedSourceFiles);
-              sourceFiles.put(sourceFile, environment.getStamper().stampOf(sourceFile));
-              res = Result.create(environment.getStamper(), mode, null, sourceFiles, dep);
+              res = Result.create(environment.getStamper(), mode, null, dep);
+              res.addSourceArtifact(sourceFile);
             }
             allUnitsToCompile.add(res);
           } catch (IOException e) {
