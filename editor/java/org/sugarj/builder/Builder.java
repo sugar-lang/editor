@@ -173,7 +173,7 @@ public class Builder extends IncrementalProjectBuilder {
         for (RelativePath sourceFile : resources.keySet()) {
           RelativePath dep = new RelativePath(environment.getBin(), FileCommands.dropExtension(sourceFile.getRelativePath()) + ".dep");
           try {
-            Result res = Result.read(environment.getStamper(), mode, dep);
+            Result res = Result.read(dep);
             if (res == null) {
               res = Result.create(environment.getStamper(), mode, null, dep);
               res.addSourceArtifact(sourceFile);
