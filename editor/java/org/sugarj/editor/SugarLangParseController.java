@@ -18,9 +18,9 @@ import org.strategoxt.imp.runtime.dynamicloading.DescriptorFactory;
 import org.strategoxt.imp.runtime.parser.JSGLRI;
 import org.strategoxt.imp.runtime.parser.SGLRParseController;
 import org.sugarj.BaseLanguageRegistry;
-import org.sugarj.common.Environment;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.StringCommands;
+import org.sugarj.driver.Environment;
 
 public class SugarLangParseController extends SugarLangParseControllerGenerated {
     private static Descriptor descriptor;
