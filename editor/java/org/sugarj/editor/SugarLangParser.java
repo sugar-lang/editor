@@ -39,6 +39,7 @@ import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
+import org.sugarj.common.util.Pair;
 import org.sugarj.driver.Driver;
 import org.sugarj.driver.DriverParameters;
 import org.sugarj.driver.Environment;
@@ -47,7 +48,6 @@ import org.sugarj.driver.Result;
 import org.sugarj.driver.RetractableTreeBuilder;
 import org.sugarj.stdlib.StdLib;
 import org.sugarj.transformations.analysis.AnalysisDataInterop;
-import org.sugarj.util.Pair;
 
 /**
  * @author Sebastian Erdweg <seba at informatik uni-marburg de>
