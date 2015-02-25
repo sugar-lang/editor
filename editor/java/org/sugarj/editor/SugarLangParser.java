@@ -32,6 +32,7 @@ import org.strategoxt.imp.runtime.parser.JSGLRI;
 import org.strategoxt.imp.runtime.services.ContentProposerSemantic;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
+import org.sugarj.cleardep.build.BuildManager;
 import org.sugarj.cleardep.stamp.Stamp;
 import org.sugarj.common.ATermCommands;
 import org.sugarj.common.CommandExecution;
@@ -40,8 +41,8 @@ import org.sugarj.common.Log;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.common.util.Pair;
-import org.sugarj.driver.Driver;
-import org.sugarj.driver.DriverParameters;
+import org.sugarj.driver.DriverFactory;
+import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.ModuleSystemCommands;
 import org.sugarj.driver.Result;
@@ -80,25 +81,15 @@ public class SugarLangParser extends JSGLRI {
   private RelativePath sourceFile;
   private AbstractBaseLanguage baseLang;
   
-  private Result cachedResult = null;
-  private synchronized void clearCachedResult() {
-    cachedResult = null;
-  }
-  private synchronized Result getResult(RelativePath sourceFile) {
+  private Result cachedResult;
+  private synchronized Result getResult() {
     if (cachedResult != null)
       return cachedResult;
     
-    try {
-      cachedResult = ModuleSystemCommands.locateResult(FileCommands.dropExtension(sourceFile.getRelativePath()), environment, environment.<Result>getMode());
-      if (cachedResult == null)
-        cachedResult = PARSE_FAILURE_RESULT;
-      return cachedResult;
-    } catch (IOException e) {
-      e.printStackTrace();
-      if (cachedResult == null)
-        cachedResult = PARSE_FAILURE_RESULT;
-      return cachedResult;
-    }
+    return PARSE_FAILURE_RESULT;
+  }
+  private synchronized void setResult(Result res) {
+    this.cachedResult = res;
   }
 
   
@@ -126,16 +117,14 @@ public class SugarLangParser extends JSGLRI {
     this.sourceFile = sourceFile;
     Pair<Map<RelativePath, String>, Map<RelativePath, Stamp>> editedSources = computeEditedSources(input, sourceFile);
     
-    Result res = getResult(sourceFile);
+    Result res = getResult();
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && res.getParseTable() != null)
       return parseCompletionTree(input, filename, res);
-    if (res.isConsistent(editedSources.b, environment.getMode()))
+    if (res.isConsistentShallow(editedSources.b))
       return res.getSugaredSyntaxTree();
-    if (res.hasFailed()) {
-      res = PARSE_FAILURE_RESULT;
+    if (res.hasFailed())
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
-    }
     
     if (!isPending(sourceFile)) 
       scheduleParse(sourceFile, editedSources.a, editedSources.b);
@@ -172,14 +161,14 @@ public class SugarLangParser extends JSGLRI {
         monitor.beginTask("parse " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
         boolean ok = false;
         try {
-          runParser(sourceFile, editedSources, editedSourceStamps, baseLang, monitor);
+          Result res = runParser(sourceFile, editedSources, editedSourceStamps, baseLang, monitor);
+          setResult(res);
           ok = true;
         } catch (InterruptedException e) {
         } catch (Exception e) {
           org.strategoxt.imp.runtime.Environment.logException(e);
         } finally {
           monitor.done();
-          clearCachedResult();
           SugarLangParser.setPending(sourceFile, false);
           if (ok)
             getController().scheduleParserUpdate(0, false);
@@ -202,9 +191,9 @@ public class SugarLangParser extends JSGLRI {
     SugarLangConsole.activateConsoleOnce();
     
     try {
-      return Driver.run(DriverParameters.create(environment, baseLang, sourceFile, editedSources, editedSourceStamps, monitor));
-    } catch (InterruptedException e) {
-      throw e;
+      BuildManager manager = new BuildManager(editedSourceStamps);
+      DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSources, editedSourceStamps, monitor);
+      return manager.require(DriverFactory.instance.makeBuilder(input, manager));
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("parsing " + FileCommands.fileName(sourceFile) + " failed", e);
@@ -214,13 +203,11 @@ public class SugarLangParser extends JSGLRI {
   
   public void setEnvironment(Environment environment) {
     this.environment = environment;
-    if (this.environment != null)
-      assert environment.getMode().isTemporary();
   }
   
   @Override
   public Set<org.spoofax.jsglr.shared.BadTokenException> getCollectedErrors() {
-    Result result = getResult(sourceFile);
+    Result result = getResult();
     if (result == null || result.getParseErrors().isEmpty())
       return Collections.emptySet();
     
@@ -232,7 +219,7 @@ public class SugarLangParser extends JSGLRI {
 
 
   public List<IStrategoTerm> getEditorServices() {
-    Result result = getResult(sourceFile);
+    Result result = getResult();
     if (result != null) {
       List<IStrategoTerm> services = new ArrayList<>(result.getEditorServices());
       services.addAll(StdLib.stdEditirServices);

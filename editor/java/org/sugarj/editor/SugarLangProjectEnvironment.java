@@ -8,12 +8,11 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.strategoxt.eclipse.ant.StrategoJarAntPropertyProvider;
 import org.sugarj.cleardep.stamp.Stamper;
+import org.sugarj.common.FileCommands;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Environment;
-import org.sugarj.driver.Result.CompilerMode;
-import org.sugarj.driver.Result.EditorMode;
 import org.sugarj.stdlib.StdLib;
 
 /**
@@ -46,10 +45,11 @@ public class SugarLangProjectEnvironment {
       
       if (forEditor) {
         env.addToIncludePath(bin);
-        env.setMode(new EditorMode());
+        // XXX nondeterministic input
+        env.setBin(FileCommands.tryNewTempDir());
       }
       else {
-        env.setMode(new CompilerMode(bin, false));
+        env.setBin(bin);
       }
       
       for (IPackageFragmentRoot fragment : project.getAllPackageFragmentRoots()) {
