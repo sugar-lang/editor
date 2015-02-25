@@ -45,6 +45,7 @@ public class SugarLangProjectEnvironment {
       
       if (forEditor) {
         // XXX nondeterministic input
+        env.addToIncludePath(bin);
         env.setBin(FileCommands.tryNewTempDir());
       }
       else {

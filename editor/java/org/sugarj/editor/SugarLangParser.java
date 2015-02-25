@@ -221,7 +221,10 @@ public class SugarLangParser extends JSGLRI {
   public List<IStrategoTerm> getEditorServices() {
     Result result = getResult();
     if (result != null) {
-      List<IStrategoTerm> services = new ArrayList<>(result.getEditorServices());
+      List<IStrategoTerm> services = new ArrayList<>();
+      List<IStrategoTerm> init = result.getEditorServices();
+      if (init != null)
+        services.addAll(init);
       services.addAll(StdLib.stdEditirServices);
       if (baseLang != null)
         services.addAll(baseLang.getInitEditorServices());
