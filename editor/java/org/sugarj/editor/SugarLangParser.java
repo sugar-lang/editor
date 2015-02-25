@@ -41,7 +41,7 @@ import org.sugarj.common.Log;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.common.util.Pair;
-import org.sugarj.driver.DriverFactory;
+import org.sugarj.driver.DriverBuildRequirement;
 import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.ModuleSystemCommands;
@@ -193,7 +193,7 @@ public class SugarLangParser extends JSGLRI {
     try {
       BuildManager manager = new BuildManager(editedSourceStamps);
       DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSources, editedSourceStamps, monitor);
-      return manager.require(DriverFactory.instance.makeBuilder(input, manager));
+      return manager.require(new DriverBuildRequirement(input));
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("parsing " + FileCommands.fileName(sourceFile) + " failed", e);

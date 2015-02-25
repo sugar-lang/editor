@@ -37,7 +37,7 @@ import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
-import org.sugarj.driver.DriverFactory;
+import org.sugarj.driver.DriverBuildRequirement;
 import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.ModuleSystemCommands;
@@ -162,7 +162,7 @@ public class Builder extends IncrementalProjectBuilder {
             AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
             try {
               DriverInput input = new DriverInput(environment, baselang, sourceFile, monitor);
-              manager.require(DriverFactory.instance.makeBuilder(input, manager));
+              manager.require(new DriverBuildRequirement(input));
             } catch (Exception e) {
               if (e instanceof RequiredBuilderFailed && e.getCause() instanceof InterruptedException)
                 throw (InterruptedException) e.getCause();
