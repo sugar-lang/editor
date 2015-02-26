@@ -8,7 +8,6 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.strategoxt.eclipse.ant.StrategoJarAntPropertyProvider;
 import org.sugarj.cleardep.stamp.Stamper;
-import org.sugarj.common.FileCommands;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -19,7 +18,7 @@ import org.sugarj.stdlib.StdLib;
  * @author Sebastian Erdweg
  */
 public class SugarLangProjectEnvironment {
-  public static Environment makeProjectEnvironment(IProject project, boolean forEditor) {
+  public static Environment makeProjectEnvironment(IProject project) {
       IJavaProject javaProject = JavaCore.create(project);
       if (javaProject == null)
         return null;
@@ -27,30 +26,22 @@ public class SugarLangProjectEnvironment {
       Environment env = null;
       
       try {
-        env = makeProjectEnvironment(javaProject, forEditor);
+        env = makeProjectEnvironment(javaProject);
       } catch (JavaModelException e) {
         throw new RuntimeException(e);
       }
       
       return env;
     }
-    
-    private static Environment makeProjectEnvironment(IJavaProject project, boolean forEditor) throws JavaModelException {
+  
+    private static Environment makeProjectEnvironment(IJavaProject project) throws JavaModelException {
       Environment env = new Environment(StdLib.stdLibDir, Stamper.DEFAULT);
       
       IPath fullPath = project.getProject().getFullPath();
       Path root = new AbsolutePath(project.getProject().getLocation().makeAbsolute().toString());
       Path bin = new RelativePath(root, project.getOutputLocation().makeRelativeTo(fullPath).toString());
       env.setRoot(root);
-      
-      if (forEditor) {
-        // XXX nondeterministic input
-        env.addToIncludePath(bin);
-        env.setBin(FileCommands.tryNewTempDir());
-      }
-      else {
-        env.setBin(bin);
-      }
+      env.setBin(bin);
       
       for (IPackageFragmentRoot fragment : project.getAllPackageFragmentRoots()) {
         IPath path = fragment.getPath();
@@ -74,7 +65,7 @@ public class SugarLangProjectEnvironment {
       for (String reqProject : project.getRequiredProjectNames()) {
         IJavaProject reqJavaProject = JavaCore.create(project.getProject().getWorkspace().getRoot().getProject(reqProject));
         if (reqJavaProject != null) {
-          Environment projEnv = makeProjectEnvironment(reqJavaProject, false);
+          Environment projEnv = makeProjectEnvironment(reqJavaProject);
 //          env.getSourcePath().addAll(projEnv.getSourcePath());
           env.addToIncludePath(projEnv.getBin());
           

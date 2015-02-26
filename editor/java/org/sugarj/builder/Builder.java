@@ -79,7 +79,7 @@ public class Builder extends IncrementalProjectBuilder {
 
   protected void clean(IProgressMonitor monitor) throws CoreException {
     File f = getProject().getLocation().append(JavaCore.create(getProject()).getOutputLocation().makeRelativeTo(getProject().getFullPath())).toFile();
-    Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject(), false);
+    Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
     try {
       if (f.exists())
         FileCommands.delete(new AbsolutePath(f.getPath()));
@@ -102,7 +102,7 @@ public class Builder extends IncrementalProjectBuilder {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
     final Map<RelativePath, IResource> resources = new HashMap<>();
 
-    final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject(), false);
+    final Environment environment = SugarLangProjectEnvironment.makeProjectEnvironment(getProject());
 
     try {
       getProject().accept(new IResourceVisitor() {

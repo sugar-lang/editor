@@ -33,6 +33,7 @@ import org.strategoxt.imp.runtime.services.ContentProposerSemantic;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
 import org.sugarj.cleardep.build.BuildManager;
+import org.sugarj.cleardep.build.BuildRequirement;
 import org.sugarj.cleardep.stamp.Stamp;
 import org.sugarj.common.ATermCommands;
 import org.sugarj.common.CommandExecution;
@@ -41,7 +42,6 @@ import org.sugarj.common.Log;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.common.util.Pair;
-import org.sugarj.driver.DriverBuildRequirement;
 import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.ModuleSystemCommands;
@@ -100,7 +100,7 @@ public class SugarLangParser extends JSGLRI {
   @Override
   protected IStrategoTerm doParse(String input, String filename) throws IOException {
     if (environment == null && getController().getProject() != null) {
-      environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject(), true);
+      environment = SugarLangProjectEnvironment.makeProjectEnvironment(getController().getProject().getRawProject());
     }
     assert environment != null;
     
@@ -110,18 +110,20 @@ public class SugarLangParser extends JSGLRI {
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
     }
     
-    RelativePath sourceFile = ModuleSystemCommands.locateSourceFile(filename, environment.getSourcePath());
-    if (sourceFile == null)
-      throw new IllegalArgumentException("Cannot find source file for path " + filename);
+    if (sourceFile == null) {
+        RelativePath sourceFile = ModuleSystemCommands.locateSourceFile(filename, environment.getSourcePath());
+      if (sourceFile == null)
+        throw new IllegalArgumentException("Cannot find source file for path " + filename);
+      this.sourceFile = sourceFile;
+    }
     
-    this.sourceFile = sourceFile;
-    Pair<Map<RelativePath, String>, Map<RelativePath, Stamp>> editedSources = computeEditedSources(input, sourceFile);
+    Pair<String, Stamp> editedSources = computeEditedSources(input, sourceFile);
     
     Result res = getResult();
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && res.getParseTable() != null)
       return parseCompletionTree(input, filename, res);
-    if (res.isConsistentShallow(editedSources.b))
+    if (res.isConsistent(Collections.singletonMap(sourceFile, editedSources.b)))
       return res.getSugaredSyntaxTree();
     if (res.hasFailed())
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
@@ -135,19 +137,19 @@ public class SugarLangParser extends JSGLRI {
       return res.getSugaredSyntaxTree();
   }
 
-  private Pair<Map<RelativePath, String>, Map<RelativePath, Stamp>> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
+  private Pair<String, Stamp> computeEditedSources(String input, RelativePath sourceFile) throws IOException {
     if (FileCommands.exists(sourceFile) && input.equals(FileCommands.readFileAsString(sourceFile)))
-      return Pair.create(Collections.<RelativePath, String>emptyMap(), Collections.<RelativePath, Stamp>emptyMap());
+      return Pair.create(null, null);
 
-    RelativePath editedSourceFile = new RelativePath(environment.getBin(), sourceFile.getRelativePath());
+    RelativePath editedSourceFile = new RelativePath(SugarLangParserBuilder.tmpTargetDir, sourceFile.getRelativePath());
     if (!FileCommands.exists(editedSourceFile) || !input.equals(FileCommands.readFileAsString(editedSourceFile)))
       FileCommands.writeToFile(editedSourceFile, input);
     Stamp stamp = environment.getStamper().stampOf(editedSourceFile);
 
-  	return Pair.create(Collections.singletonMap(sourceFile, input), Collections.singletonMap(sourceFile, stamp));
+  	return Pair.create(input, stamp);
   }
   
-  private synchronized void scheduleParse(final RelativePath sourceFile, final Map<RelativePath, String> editedSources, final Map<RelativePath, Stamp> editedSourceStamps) {
+  private synchronized void scheduleParse(final RelativePath sourceFile, final String editedSource, final Stamp editedSourceStamp) {
     if (environment == null) {
       getController().scheduleParserUpdate(200, false);
       return;
@@ -161,7 +163,7 @@ public class SugarLangParser extends JSGLRI {
         monitor.beginTask("parse " + sourceFile.getRelativePath(), IProgressMonitor.UNKNOWN);
         boolean ok = false;
         try {
-          Result res = runParser(sourceFile, editedSources, editedSourceStamps, baseLang, monitor);
+          Result res = runParser(sourceFile, editedSource, editedSourceStamp, baseLang, monitor);
           setResult(res);
           ok = true;
         } catch (InterruptedException e) {
@@ -181,7 +183,7 @@ public class SugarLangParser extends JSGLRI {
     parseJob.schedule();
   }
   
-  private Result runParser(RelativePath sourceFile, Map<RelativePath, String> editedSources, Map<RelativePath, Stamp> editedSourceStamps, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
+  private Result runParser(RelativePath sourceFile, String editedSource, Stamp editedSourceStamp, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
     CommandExecution.SILENT_EXECUTION = false;
     CommandExecution.SUB_SILENT_EXECUTION = false;
     CommandExecution.FULL_COMMAND_LINE = true;
@@ -191,9 +193,9 @@ public class SugarLangParser extends JSGLRI {
     SugarLangConsole.activateConsoleOnce();
     
     try {
-      BuildManager manager = new BuildManager(editedSourceStamps);
-      DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSources, editedSourceStamps, monitor);
-      return manager.require(new DriverBuildRequirement(input));
+      BuildManager manager = new BuildManager(Collections.singletonMap(sourceFile, editedSourceStamp));
+      DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSource, editedSourceStamp, monitor);
+      return manager.require(new BuildRequirement<>(SugarLangParserBuilder.factory, input));
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("parsing " + FileCommands.fileName(sourceFile) + " failed", e);

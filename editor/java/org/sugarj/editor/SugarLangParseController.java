@@ -126,7 +126,7 @@ public class SugarLangParseController extends SugarLangParseControllerGenerated 
     
     private void initializeEnvironment(IProject project) {
       if (project != null)
-        environment = SugarLangProjectEnvironment.makeProjectEnvironment(project, true);
+        environment = SugarLangProjectEnvironment.makeProjectEnvironment(project);
       
       if (sugarjParser != null)
         sugarjParser.setEnvironment(environment);
