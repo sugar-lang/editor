@@ -15,10 +15,10 @@ public class EditorResult extends Result {
     desugaringsFile = other.getDesugaringsFile();
   }
   
-  protected boolean isConsistentExtend() {
+  public boolean isConsistent() {
     if (desugaringsFile == null)
       return false;
-    return super.isConsistentExtend();
+    return super.isConsistent();
   }
 
 }

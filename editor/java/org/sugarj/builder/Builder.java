@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceDelta;
@@ -29,7 +28,6 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
 import org.sugarj.cleardep.build.BuildManager;
-import org.sugarj.cleardep.build.RequiredBuilderFailed;
 import org.sugarj.common.CommandExecution;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
@@ -37,7 +35,7 @@ import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Driver;
-import org.sugarj.driver.DriverBuildRequirement;
+import org.sugarj.driver.DriverBuildRequest;
 import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.ModuleSystemCommands;
@@ -156,31 +154,27 @@ public class Builder extends IncrementalProjectBuilder {
           Driver.addProcessingDoneListener(marker);
           // getLock(getProject()).acquire();
   
-          BuildManager manager = new BuildManager();
+          DriverBuildRequest[] reqs = new DriverBuildRequest[resources.size()];
+          int i = 0;
           
           for (RelativePath sourceFile : resources.keySet()) {
             AbstractBaseLanguage baselang = languageReg.getBaseLanguage(FileCommands.getExtension(sourceFile));
+            DriverInput input;
             try {
-              DriverInput input = new DriverInput(environment, baselang, sourceFile, monitor);
-              manager.require(new DriverBuildRequirement(input));
-            } catch (Exception e) {
-              if (e instanceof RequiredBuilderFailed && e.getCause() instanceof InterruptedException)
-                throw (InterruptedException) e.getCause();
-              
+              input = new DriverInput(environment, baselang, sourceFile, monitor);
+              reqs[i] = new DriverBuildRequest(input);
+            } catch (IOException e) {
+              reqs[i] = null;
               e.printStackTrace();
-              try {
-                IMarker m = resources.get(sourceFile).createMarker(IMarker.PROBLEM);
-                m.setAttribute(IMarker.MESSAGE, "compilation failed: " + e.getMessage());
-              } catch (CoreException ce) {
-              }
             }
-  
+            i++;
+          }
+
+          BuildManager.buildAll(reqs);
+
+          for (RelativePath sourceFile : resources.keySet()) {
             updateUI(sourceFile);
           }
-        } catch (InterruptedException e) {
-          monitor.setCanceled(true);
-          monitor.done();
-          return Status.CANCEL_STATUS;
         } finally {
           // getLock(getProject()).release();
           Driver.removeProcessingDoneListener(marker);

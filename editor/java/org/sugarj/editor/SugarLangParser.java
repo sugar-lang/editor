@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -39,7 +38,6 @@ import org.sugarj.common.ATermCommands;
 import org.sugarj.common.CommandExecution;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
-import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.common.util.Pair;
 import org.sugarj.driver.DriverInput;
@@ -123,10 +121,10 @@ public class SugarLangParser extends JSGLRI {
     
     if (input.contains(ContentProposerSemantic.COMPLETION_TOKEN) && res.getParseTable() != null)
       return parseCompletionTree(input, filename, res);
-    if (res.isConsistent(Collections.singletonMap(sourceFile, editedSources.b)))
-      return res.getSugaredSyntaxTree();
-    if (res.hasFailed())
+    if (res.getSugaredSyntaxTree() == null)
       return PARSE_FAILURE_RESULT.getSugaredSyntaxTree();
+    if (res.isConsistent())
+      return res.getSugaredSyntaxTree();
     
     if (!isPending(sourceFile)) 
       scheduleParse(sourceFile, editedSources.a, editedSources.b);
@@ -193,9 +191,8 @@ public class SugarLangParser extends JSGLRI {
     SugarLangConsole.activateConsoleOnce();
     
     try {
-      BuildManager manager = new BuildManager(Collections.singletonMap(sourceFile, editedSourceStamp));
       DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSource, editedSourceStamp, monitor);
-      return manager.requires(new BuildRequest<>(SugarLangParserBuilder.factory, input));
+      return BuildManager.build(new BuildRequest<>(SugarLangParserBuilder.factory, input), Collections.singletonMap(sourceFile, editedSourceStamp));
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("parsing " + FileCommands.fileName(sourceFile) + " failed", e);
@@ -281,8 +278,7 @@ public class SugarLangParser extends JSGLRI {
     
     class FailureResult extends Result {
       private static final long serialVersionUID = 1015028752880035858L;
-      public FailureResult() { init(); }
-      @Override public boolean isConsistentShallow(Map<? extends Path, Stamp> editedSourceFiles) { return false; };
+      @Override public boolean isConsistent() { return false; };
     }
     Result r = new FailureResult();
     r.setSugaredSyntaxTree(term);

@@ -1,7 +1,6 @@
 package org.sugarj.editor;
 
 import org.sugarj.cleardep.BuildUnit.State;
-import org.sugarj.cleardep.build.BuildManager;
 import org.sugarj.cleardep.build.Builder;
 import org.sugarj.cleardep.build.BuilderFactory;
 import org.sugarj.cleardep.stamp.ContentHashStamper;
@@ -9,7 +8,7 @@ import org.sugarj.cleardep.stamp.Stamper;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
-import org.sugarj.driver.DriverBuildRequirement;
+import org.sugarj.driver.DriverBuildRequest;
 import org.sugarj.driver.DriverInput;
 import org.sugarj.driver.Environment;
 import org.sugarj.driver.Result;
@@ -22,14 +21,14 @@ public class SugarLangParserBuilder extends Builder<DriverInput, EditorResult> {
     private static final long serialVersionUID = -3323446217071484245L;
 
     @Override
-    public SugarLangParserBuilder makeBuilder(DriverInput input, BuildManager manager) {
-      return new SugarLangParserBuilder(input, manager);
+    public SugarLangParserBuilder makeBuilder(DriverInput input) {
+      return new SugarLangParserBuilder(input);
     }
     
   };
   
-  public SugarLangParserBuilder(DriverInput input, BuildManager manager) {
-    super(input, factory, manager);
+  public SugarLangParserBuilder(DriverInput input) {
+    super(input);
   }
 
   @Override
@@ -44,24 +43,20 @@ public class SugarLangParserBuilder extends Builder<DriverInput, EditorResult> {
   }
 
   @Override
-  protected Class<EditorResult> resultClass() {
-    return EditorResult.class;
-  }
-
-  @Override
   protected Stamper defaultStamper() {
     return ContentHashStamper.instance;
   }
 
   @Override
-  protected void build(EditorResult result) throws Throwable {
+  protected EditorResult build() throws Throwable {
+    EditorResult result = new EditorResult();
     Result res = null;
     
     if (input.editedSourceStamp == null) {
-      res = require(new DriverBuildRequirement(input));
+      res = require(new DriverBuildRequest(input));
       if (res.getDesugaringsFile() != null) {
         result.copyEditorFrom(res);
-        return;
+        return result;
       }
     }
     
@@ -70,9 +65,11 @@ public class SugarLangParserBuilder extends Builder<DriverInput, EditorResult> {
     env.setBin(tmpTargetDir);
     env.addToIncludePath(oldBin);
     DriverInput tmpinput = new DriverInput(env, input.baseLang, input.sourceFilePath, input.editedSource, input.editedSourceStamp, input.renamings, input.monitor, input.injectedRequirements);
-    res = require(new DriverBuildRequirement(tmpinput));
+    res = require(new DriverBuildRequest(tmpinput));
     result.copyEditorFrom(res);
     
-    result.setState(State.finished(result.getDesugaringsFile() != null));
+    setState(State.finished(result.getDesugaringsFile() != null));
+    
+    return result;
   }
 }
