@@ -10,6 +10,8 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.spoofax.jsglr.shared.BadTokenException;
+import org.sugarj.common.FileCommands;
+import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
 import org.sugarj.driver.Result;
 import org.sugarj.util.ProcessingListener;
@@ -25,14 +27,14 @@ public class MarkingProcessingListener extends ProcessingListener {
     this.project = project;
   }
 
-  private IResource getResource(RelativePath sourceFile) throws JavaModelException {
+  private IResource getResource(Path sourceFile) throws JavaModelException {
     if (!sourceFile.getAbsolutePath().startsWith(project.getLocation().toString()))
       return null;
     
     try {
       for (IPackageFragmentRoot frag : JavaCore.create(project).getAllPackageFragmentRoots())
         if (frag.getKind() == IPackageFragmentRoot.K_SOURCE) {
-          IResource resource = project.findMember(frag.getPath().makeRelativeTo(project.getFullPath()).append(sourceFile.getRelativePath()));
+          IResource resource = project.findMember(frag.getPath().makeRelativeTo(project.getFullPath()).append(FileCommands.tryGetRelativePath(sourceFile)));
           if (resource != null)
             return resource;
         }
@@ -55,7 +57,7 @@ public class MarkingProcessingListener extends ProcessingListener {
   @Override
   public void processingDone(Result result) {
     try {
-      for (RelativePath sourceFile : result.getSourceArtifacts()) {
+      for (Path sourceFile : result.getSourceArtifacts()) {
         IResource resource = getResource(sourceFile);
         if (resource == null)
           continue;

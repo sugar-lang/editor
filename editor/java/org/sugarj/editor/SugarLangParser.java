@@ -33,7 +33,7 @@ import org.strategoxt.imp.runtime.services.ContentProposerSemantic;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
 import org.sugarj.cleardep.build.BuildManager;
-import org.sugarj.cleardep.build.BuildRequirement;
+import org.sugarj.cleardep.build.BuildRequest;
 import org.sugarj.cleardep.stamp.Stamp;
 import org.sugarj.common.ATermCommands;
 import org.sugarj.common.CommandExecution;
@@ -195,7 +195,7 @@ public class SugarLangParser extends JSGLRI {
     try {
       BuildManager manager = new BuildManager(Collections.singletonMap(sourceFile, editedSourceStamp));
       DriverInput input = new DriverInput(environment, baseLang, sourceFile, editedSource, editedSourceStamp, monitor);
-      return manager.require(new BuildRequirement<>(SugarLangParserBuilder.factory, input));
+      return manager.requires(new BuildRequest<>(SugarLangParserBuilder.factory, input));
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException("parsing " + FileCommands.fileName(sourceFile) + " failed", e);
