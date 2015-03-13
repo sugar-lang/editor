@@ -7,7 +7,7 @@ import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.strategoxt.eclipse.ant.StrategoJarAntPropertyProvider;
-import org.sugarj.cleardep.stamp.Stamper;
+import org.sugarj.cleardep.stamp.FileHashStamper;
 import org.sugarj.common.path.AbsolutePath;
 import org.sugarj.common.path.Path;
 import org.sugarj.common.path.RelativePath;
@@ -35,7 +35,7 @@ public class SugarLangProjectEnvironment {
     }
   
     private static Environment makeProjectEnvironment(IJavaProject project) throws JavaModelException {
-      Environment env = new Environment(StdLib.stdLibDir, Stamper.DEFAULT);
+      Environment env = new Environment(StdLib.stdLibDir, FileHashStamper.instance);
       
       IPath fullPath = project.getProject().getFullPath();
       Path root = new AbsolutePath(project.getProject().getLocation().makeAbsolute().toString());
