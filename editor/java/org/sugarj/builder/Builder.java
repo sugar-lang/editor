@@ -28,7 +28,7 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.sugarj.AbstractBaseLanguage;
 import org.sugarj.BaseLanguageRegistry;
 import org.sugarj.cleardep.build.BuildManager;
-import org.sugarj.common.CommandExecution;
+import org.sugarj.common.Exec;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
 import org.sugarj.common.path.AbsolutePath;
@@ -138,9 +138,9 @@ public class Builder extends IncrementalProjectBuilder {
   private void build(final Environment environment, IProgressMonitor monitor, final Map<RelativePath, IResource> resources, String what) {
     final BaseLanguageRegistry languageReg = BaseLanguageRegistry.getInstance();
 
-    CommandExecution.SILENT_EXECUTION = false;
-    CommandExecution.SUB_SILENT_EXECUTION = false;
-    CommandExecution.FULL_COMMAND_LINE = true;
+    Exec.SILENT_EXECUTION = false;
+    Exec.SUB_SILENT_EXECUTION = false;
+    Exec.FULL_COMMAND_LINE = true;
 
     Log.out = SugarLangConsole.getOutputPrintStream();
     Log.err = SugarLangConsole.getErrorPrintStream();

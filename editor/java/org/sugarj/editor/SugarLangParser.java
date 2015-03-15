@@ -35,7 +35,7 @@ import org.sugarj.cleardep.build.BuildManager;
 import org.sugarj.cleardep.build.BuildRequest;
 import org.sugarj.cleardep.stamp.Stamp;
 import org.sugarj.common.ATermCommands;
-import org.sugarj.common.CommandExecution;
+import org.sugarj.common.Exec;
 import org.sugarj.common.FileCommands;
 import org.sugarj.common.Log;
 import org.sugarj.common.path.RelativePath;
@@ -182,9 +182,9 @@ public class SugarLangParser extends JSGLRI {
   }
   
   private Result runParser(RelativePath sourceFile, String editedSource, Stamp editedSourceStamp, AbstractBaseLanguage baseLang, IProgressMonitor monitor) throws InterruptedException {
-    CommandExecution.SILENT_EXECUTION = false;
-    CommandExecution.SUB_SILENT_EXECUTION = false;
-    CommandExecution.FULL_COMMAND_LINE = true;
+    Exec.SILENT_EXECUTION = false;
+    Exec.SUB_SILENT_EXECUTION = false;
+    Exec.FULL_COMMAND_LINE = true;
     
     Log.out = SugarLangConsole.getOutputPrintStream();
     Log.err = SugarLangConsole.getErrorPrintStream();
