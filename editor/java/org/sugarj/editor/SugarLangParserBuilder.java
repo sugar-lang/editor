@@ -32,7 +32,7 @@ public class SugarLangParserBuilder extends Builder<DriverInput, EditorResult> {
   }
 
   @Override
-  protected String taskDescription() {
+  protected String description() {
     return null;
   }
 
