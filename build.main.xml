@@ -61,6 +61,7 @@
 			<path><pathelement path="${compile.classpath}"/></path>
 		</copy>
 
+		<echo message="${eclipse.spoofaximp.strategojar}" />
 		<antcall target="all"/>
 		
 		<delete dir="${eclipse.spoofaximp.jars}" />

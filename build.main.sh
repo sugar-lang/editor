@@ -3,6 +3,7 @@
 BASEDIR=`pwd $(dirname $0)`
 
 CP=`cat $1`
+
 CP_=$(echo $CP | tr ":" "\n")
 NEW_CP=""
 EMPTY=true
@@ -40,6 +41,4 @@ echo "native/native/$OS/sdf2table"
 chmod +x native/native/$OS/sdf2table
 chmod +x native/native/$OS/implodePT
 LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$NEW_CP -Declipse.spoofaximp.nativeprefix=$BASEDIR/native/native/$OS/ shell-all ## \
-#&& rm -rf native \
-##&& rm $1
 
