@@ -20,9 +20,16 @@ for path in $CP_ ; do
       NEW_CP="$NEW_CP:$path"
     fi
   fi
+  MATCH=`echo $path | sed 's/.*org\.strategoxt\.strj_.*/ok/'`
+  if [ "$MATCH" = "ok" ]; then
+    STRATEGO_JAR=$path/java/strategoxt.jar
+  fi
 done
-echo "Native Jar File"
+
+echo "Native JAR"
 echo $NATIVE_JAR
+echo "Stratego JAR"
+echo $STRATEGO_JAR
 
 mkdir -p native
 (cd native && jar xf $NATIVE_JAR)
@@ -40,5 +47,9 @@ echo "native/native/$OS/sdf2table"
 
 chmod +x native/native/$OS/sdf2table
 chmod +x native/native/$OS/implodePT
-LOCALCLASSPATH=$CP ant -f build.main.xml -Dcompile.classpath=$NEW_CP -Declipse.spoofaximp.nativeprefix=$BASEDIR/native/native/$OS/ shell-all ## \
+LOCALCLASSPATH=$CP ant -f build.main.xml \
+  -Dcompile.classpath=$NEW_CP \
+  -Declipse.spoofaximp.nativeprefix=$BASEDIR/native/native/$OS/ \
+  -Declipse.spoofaximp.strategojar=$STRATEGO_JAR \
+  shell-all ## \
 
