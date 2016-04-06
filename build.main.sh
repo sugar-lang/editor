@@ -20,7 +20,7 @@ for path in $CP_ ; do
       NEW_CP="$NEW_CP:$path"
     fi
   fi
-  MATCH=`echo $path | sed 's/.*org\.strategoxt\.strj_.*/ok/'`
+  MATCH=`echo $path | sed 's/.*org\.strategoxt\.strj.*/ok/'`
   if [ "$MATCH" = "ok" ]; then
     STRATEGO_JAR=$path/java/strategoxt.jar
   fi
@@ -30,6 +30,10 @@ echo "Native JAR"
 echo $NATIVE_JAR
 echo "Stratego JAR"
 echo $STRATEGO_JAR
+
+echo 
+echo $CP
+echo
 
 mkdir -p native
 (cd native && jar xf $NATIVE_JAR)
