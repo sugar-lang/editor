@@ -12,7 +12,7 @@
     <!-- Project directories -->
     <property name="trans" location="trans"/>
     <property name="src-gen" location="editor/java"/>
-    <property name="src-dirs" location="editor/java/org/sugarj/editor/strategies"/>
+    <property name="src-dirs" location="editor/java/"/>
     <property name="include" location="include"/>
     <property name="lib" location="lib"/>
     <property name="build" location="target/classes"/>
@@ -64,6 +64,6 @@
 		<echo>Stratego JAR: ${eclipse.spoofaximp.strategojar}</echo>
 		<antcall target="all"/>
 		
-		<delete dir="${eclipse.spoofaximp.jars}" />
+    <delete dir="${eclipse.spoofaximp.jars}" />
 	</target>
 </project>
